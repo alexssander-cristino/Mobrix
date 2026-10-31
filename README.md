@@ -22,7 +22,8 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 - Banco de retalhos com dimensões, material e situação de reaproveitamento
 - Apontamento de tempo por colaborador, operação e projeto
 - Indicadores de atraso, horas apontadas e área de retalhos disponíveis
-- Materiais e saldo de estoque
+- Materiais e saldo de estoque, com dimensões de chapas para cálculo de aproveitamento
+- Compra inteligente por projeto: encaixe de peças em retalhos e chapas disponíveis, identificação do que não encaixou e estimativa de chapas a comprar
 - Movimentações de estoque com validação transacional
 - Lançamentos de receitas e despesas
 - Ferramentas originais de orçamento, precificação, prazo, plano de corte e visualização 3D preservadas em `public/ferramentas-legadas.html` (ainda com armazenamento local, até a migração específica desses módulos para PostgreSQL).
