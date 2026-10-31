@@ -7,10 +7,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "check": "node --check server.js && node --check public/app.js && node --check db/migrate.js && node --check scripts/ci-db-setup.js",
+    "check": "node --check server.js && node --check public/app.js && node --check db/migrate.js && node --check scripts/db-setup.js && node --check scripts/ci-db-setup.js",
     "test": "npm run check",
     "db:migrate": "node db/migrate.js",
-    "db:setup": "node scripts/db-setup.js && node db/migrate.js"
+    "db:setup": "node scripts/db-setup.js && node db/migrate.js",
+    "predev": "npm run db:setup"
   },
   "engines": {
     "node": ">=20"
