@@ -111,6 +111,10 @@ async function main() {
       token: registered.token, method: 'PATCH', body: { stage: 'corte' }
     }), 200, 'Avanço de produção');
 
+    const plan = await expectStatus(await request('/purchasing/plan?project_id='+project.id, { token: registered.token }), 200, 'Planejamento de compra inteligente');
+    assert.equal(plan.summary.pieces, 2, 'Planejador não considerou a quantidade de peças da ficha técnica.');
+    assert.equal(plan.summary.allocated, 0, 'Não deveria encaixar sem dimensões de chapa ou retalho compatível.');
+
     for (const path of ['/customers', '/projects', '/orders', '/materials', '/finance', '/stock/movements', '/engineering/parts', '/offcuts', '/time-entries', '/production/metrics']) {
       await expectStatus(await request(path, { token: registered.token }), 200, `Leitura ${path}`);
     }
