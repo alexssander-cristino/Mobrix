@@ -114,14 +114,14 @@ DROP TRIGGER IF EXISTS trg_offcuts_material_company ON offcuts;
 CREATE TRIGGER trg_offcuts_material_company BEFORE INSERT OR UPDATE OF company_id, material_id ON offcuts
 FOR EACH ROW EXECUTE FUNCTION mobrix_assert_material_company();
 
-CREATE OR REPLACE FUNCTION mobrix_assert_offcut_project_company() RETURNS trigger AS $
+CREATE OR REPLACE FUNCTION mobrix_assert_offcut_project_company() RETURNS trigger AS $offcut$
 BEGIN
   IF NEW.source_project_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projects WHERE id=NEW.source_project_id AND company_id=NEW.company_id) THEN
     RAISE EXCEPTION 'Projeto de origem não pertence à empresa autenticada' USING ERRCODE='23503';
   END IF;
   RETURN NEW;
 END;
-$ LANGUAGE plpgsql;
+$offcut$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_offcuts_project_company ON offcuts;
 CREATE TRIGGER trg_offcuts_project_company BEFORE INSERT OR UPDATE OF company_id, source_project_id ON offcuts
