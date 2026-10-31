@@ -68,7 +68,7 @@ Rotas de dados exigem `Authorization: Bearer <token>`.
 
 ## Deploy
 
-Configure no provedor: Start `npm start`, `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `CORS_ORIGIN`. Em banco novo, aplique `db/schema.sql` uma vez; em seguida execute `npm run db:migrate`.
+Configure no provedor: Start `npm start`, `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `CORS_ORIGIN`. Antes de iniciar a aplicação, execute `npm run db:setup` em um ambiente com acesso ao banco. O comando prepara o schema e aplica as migrações pendentes; faça backup antes de qualquer alteração em banco com dados importantes.
 
 ## Próximas etapas
 
