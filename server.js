@@ -8,8 +8,30 @@ const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
+
+// Fail fast with an actionable message instead of allowing every API request
+// to fail later with a PostgreSQL SCRAM password error.
+const databaseUrl = process.env.DATABASE_URL?.trim();
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL não foi definida. Crie o arquivo .env na raiz do projeto e configure a conexão PostgreSQL.');
+}
+
+let databaseConnection;
+try {
+  databaseConnection = new URL(databaseUrl);
+} catch {
+  throw new Error('DATABASE_URL inválida. Use o formato postgresql://USUARIO:SENHA@HOST:5432/BANCO.');
+}
+
+if (!['postgres:', 'postgresql:'].includes(databaseConnection.protocol)) {
+  throw new Error('DATABASE_URL deve usar o protocolo postgres:// ou postgresql://.');
+}
+if (!databaseConnection.username || !databaseConnection.password) {
+  throw new Error('DATABASE_URL precisa conter usuário e senha. Codifique caracteres especiais da senha para URL (ex.: @ vira %40 e # vira %23).');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
