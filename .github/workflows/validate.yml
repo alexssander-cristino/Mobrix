@@ -33,3 +33,4 @@ jobs:
       - run: npm run db:setup
       - run: npm run db:setup
       - run: npm test
+      - run: node scripts/ci-smoke-test.js
