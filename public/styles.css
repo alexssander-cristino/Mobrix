@@ -19,3 +19,5 @@
 .table-wrap select{border:1px solid var(--line);border-radius:7px;padding:7px;background:#fff;color:var(--ink);font-size:11px}
 .field select:focus,.field textarea:focus,.search-input:focus{border-color:#8da394;box-shadow:0 0 0 3px #526b5b16}
 @media(max-width:760px){.auth-screen{padding:76px 16px 55px}.auth-card{border-radius:12px}.page-toolbar .btn{width:100%}.table-wrap{max-width:calc(100vw - 30px)}}
+
+.nav-item{text-decoration:none}
