@@ -694,14 +694,19 @@ tbody tr{transition:background .15s ease}tbody tr:hover{background:#fdf8f8}
 }
 
 
-/* Sidebar typography refinement — compact labels */
+/* Sidebar typography refinement — balanced sizing */
 .sidebar .nav-item,
 .sidebar .sidebar-settings-link,
 .sidebar .nav-item .nav-text,
-.sidebar .sidebar-settings-link .nav-text{font-size:7px!important;line-height:1.15!important;letter-spacing:0!important;font-weight:500!important}
-.sidebar .nav-item{min-height:32px!important;padding-top:0!important;padding-bottom:0!important;gap:8px!important}
-.sidebar .sidebar-settings-link{min-height:32px!important}
-.sidebar .nav-icon{width:16px!important;height:16px!important}
-.sidebar .nav-icon svg{width:14px!important;height:14px!important}
-.sidebar .nav-label,.sidebar .nav-caption{font-size:6px!important;letter-spacing:.8px!important}
-.sidebar .nav{gap:8px!important}
+.sidebar .sidebar-settings-link .nav-text{
+  font-size:10px!important;
+  line-height:1.25!important;
+  letter-spacing:0!important;
+  font-weight:600!important;
+}
+.sidebar .nav-item{min-height:38px!important;padding:0 11px!important;gap:10px!important}
+.sidebar .sidebar-settings-link{min-height:38px!important}
+.sidebar .nav-icon{width:19px!important;height:19px!important}
+.sidebar .nav-icon svg{width:17px!important;height:17px!important}
+.sidebar .nav-label,.sidebar .nav-caption{font-size:7px!important;letter-spacing:1px!important}
+.sidebar .nav{gap:11px!important}
