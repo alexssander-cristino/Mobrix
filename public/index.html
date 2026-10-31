@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="MOBRIX — gestão inteligente para marcenarias.">
+  <title>MOBRIX | Gestão industrial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <section id="auth-screen" class="auth-screen">
+    <div class="auth-brand"><div class="brand-mark">M</div><span>MOBRIX</span></div>
+    <div class="auth-card">
+      <p class="eyebrow">GESTÃO INDUSTRIAL</p>
+      <h1 id="auth-title">Sua marcenaria,<br><span>sob controle.</span></h1>
+      <p class="muted" id="auth-description">Entre para acompanhar sua operação.</p>
+      <form id="login-form" class="form-stack">
+        <label>E-mail<input name="email" type="email" placeholder="voce@empresa.com" required autocomplete="email"></label>
+        <label>Senha<input name="password" type="password" placeholder="Sua senha" required autocomplete="current-password"></label>
+        <button class="btn btn-primary" type="submit">Entrar na plataforma <span>→</span></button>
+      </form>
+      <form id="register-form" class="form-stack hidden">
+        <label>Nome da empresa<input name="company" required placeholder="Sua marcenaria"></label>
+        <label>Seu nome<input name="name" required placeholder="Nome completo"></label>
+        <label>E-mail<input name="email" type="email" required placeholder="voce@empresa.com"></label>
+        <label>Senha<input name="password" type="password" minlength="8" required placeholder="Mínimo de 8 caracteres"></label>
+        <button class="btn btn-primary" type="submit">Criar ambiente <span>→</span></button>
+      </form>
+      <p class="auth-switch" id="auth-switch">Ainda não tem acesso? <button type="button" id="show-register">Criar empresa</button></p>
+      <p class="auth-error" id="auth-error" role="alert"></p>
+    </div>
+    <p class="auth-foot">Precisão na gestão. Liberdade para produzir.</p>
+  </section>
+
+  <div id="app" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand"><div class="brand-mark">M</div><div><strong>MOBRIX</strong><small>GESTÃO INDUSTRIAL</small></div></div>
+      <div class="company-chip"><span class="status-dot"></span><span id="company-name">Minha empresa</span></div>
+      <nav class="nav">
+        <p class="nav-label">VISÃO GERAL</p>
+        <button class="nav-item active" data-page="dashboard"><span>▦</span> Visão geral</button>
+        <p class="nav-label">OPERAÇÃO</p>
+        <button class="nav-item" data-page="projects"><span>◇</span> Projetos e móveis</button>
+        <button class="nav-item" data-page="orders"><span>▤</span> Produção</button>
+        <button class="nav-item" data-page="customers"><span>♙</span> Clientes</button>
+        <button class="nav-item" data-page="materials"><span>▧</span> Estoque e materiais</button>
+        <button class="nav-item" data-page="finance"><span>＄</span> Financeiro</button>
+        <p class="nav-label">SISTEMA</p>
+        <button class="nav-item" data-page="settings"><span>⚙</span> Configurações</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="user-avatar" id="user-avatar">M</div><div class="user-meta"><strong id="user-name">Usuário</strong><small id="user-role">Administrador</small></div><button class="icon-button" id="logout" title="Sair">↗</button></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><button class="mobile-menu" id="mobile-menu">☰</button><div><p class="eyebrow" id="page-kicker">PAINEL DE CONTROLE</p><h1 id="page-title">Visão geral</h1></div><div class="top-actions"><span class="today" id="today"></span><button class="avatar-small" id="profile-shortcut">M</button></div></header>
+      <section id="page-content" class="page-content"><div class="loading">Carregando operação...</div></section>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
