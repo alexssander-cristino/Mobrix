@@ -62,6 +62,13 @@ async function main() {
 
     await expectStatus(await request('/me', { token: registered.token }), 200, 'Sessão');
     await expectStatus(await request('/dashboard', { token: registered.token }), 200, 'Dashboard');
+    const initialOverview = await expectStatus(await request('/projects/'+project.id+'/overview',{token:registered.token}),200,'Visão integrada do projeto');
+    assert.equal(initialOverview.project.customer_name,'Cliente de teste','Projeto não vinculou corretamente o cliente.');
+    const approved = await expectStatus(await request('/projects/'+project.id+'/approve',{token:registered.token,method:'POST',body:{}}),200,'Aprovação integrada');
+    assert.ok(approved.order?.id,'Aprovação não criou ordem de produção.');
+    const approvedAgain = await expectStatus(await request('/projects/'+project.id+'/approve',{token:registered.token,method:'POST',body:{}}),200,'Aprovação idempotente');
+    assert.equal(approvedAgain.order.id,approved.order.id,'Aprovação duplicou a ordem de produção.');
+
 
     const customer = await expectStatus(await request('/customers', {
       token: registered.token, method: 'POST', body: { name: 'Cliente de teste' }
