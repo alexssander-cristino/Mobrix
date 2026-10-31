@@ -30,6 +30,6 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: node scripts/ci-db-setup.js
-      - run: npm run db:migrate
+      - run: npm run db:setup
+      - run: npm run db:setup
       - run: npm test
