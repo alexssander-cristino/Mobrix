@@ -34,7 +34,7 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 2. Crie um banco chamado `mobrix`.
 3. Copie `.env.example` para `.env` e configure `DATABASE_URL` e `JWT_SECRET`.
 4. Execute `db/schema.sql` no banco.
-5. Instale dependências e inicie:
+6. Instale dependências e inicie:
 
 ```bash
 npm install
