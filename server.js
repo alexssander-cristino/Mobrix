@@ -267,6 +267,43 @@ app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
  res.json({project:project.rows[0],materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+(x.purchaseSheets||0),0),estimatedPurchase:output.reduce((n,x)=>n+(x.estimatedPurchase||0),0)}});
 }));
 
+
+/* Visão 360º do projeto: consolida os módulos vinculados em uma única consulta. */
+app.get('/api/projects/:id/overview',auth,asyncRoute(async(req,res)=>{
+ const company=req.user.company_id,id=req.params.id;
+ const [project,orders,parts,finance,time,materials,offcuts]=await Promise.all([
+  pool.query('SELECT p.*,c.name customer_name,c.phone customer_phone,c.email customer_email,c.address customer_address FROM projects p LEFT JOIN customers c ON c.id=p.customer_id AND c.company_id=p.company_id WHERE p.id=$1 AND p.company_id=$2',[id,company]),
+  pool.query('SELECT * FROM production_orders WHERE project_id=$1 AND company_id=$2 ORDER BY created_at DESC',[id,company]),
+  pool.query('SELECT pp.*,m.name material_name,m.unit,m.quantity stock_quantity,m.unit_cost FROM project_parts pp LEFT JOIN materials m ON m.id=pp.material_id AND m.company_id=pp.company_id WHERE pp.project_id=$1 AND pp.company_id=$2 ORDER BY pp.created_at',[id,company]),
+  pool.query('SELECT * FROM finance_transactions WHERE project_id=$1 AND company_id=$2 ORDER BY due_date NULLS LAST,created_at DESC',[id,company]),
+  pool.query('SELECT * FROM time_entries WHERE project_id=$1 AND company_id=$2 ORDER BY started_at DESC LIMIT 100',[id,company]),
+  pool.query(`SELECT m.id,m.name,m.unit,m.quantity,m.minimum_quantity,m.unit_cost,COALESCE(SUM(pp.quantity),0)::int AS planned_units FROM materials m LEFT JOIN project_parts pp ON pp.material_id=m.id AND pp.project_id=$2 AND pp.company_id=m.company_id WHERE m.company_id=$1 GROUP BY m.id ORDER BY m.name`,[company,id]),
+  pool.query("SELECT COUNT(*)::int total FROM offcuts WHERE company_id=$1 AND status='disponivel'",[company])
+ ]);
+ if(!project.rowCount)return res.status(404).json({error:'Projeto não encontrado.'});
+ const transactions=finance.rows,paid=transactions.filter(x=>x.paid_at),income=paid.filter(x=>x.transaction_type==='receita').reduce((n,x)=>n+Number(x.amount),0),expenses=paid.filter(x=>x.transaction_type==='despesa').reduce((n,x)=>n+Number(x.amount),0);
+ res.json({project:project.rows[0],orders:orders.rows,parts:parts.rows,finance:transactions,timeEntries:time.rows,materials:materials.rows,availableOffcuts:offcuts.rows[0].total,financial:{income,expenses,result:income-expenses,receivables:transactions.filter(x=>x.transaction_type==='receita'&&!x.paid_at).reduce((n,x)=>n+Number(x.amount),0),payables:transactions.filter(x=>x.transaction_type==='despesa'&&!x.paid_at).reduce((n,x)=>n+Number(x.amount),0)}});
+}));
+
+/* Aprovação comercial cria a ordem operacional uma única vez, sem lançar recebimento fictício. */
+app.post('/api/projects/:id/approve',auth,asyncRoute(async(req,res)=>{
+ const client=await pool.connect(),company=req.user.company_id,id=req.params.id;
+ try{
+  await client.query('BEGIN');
+  const p=await client.query('SELECT * FROM projects WHERE id=$1 AND company_id=$2 FOR UPDATE',[id,company]);
+  if(!p.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Projeto não encontrado.'});}
+  if(['cancelado','concluido'].includes(p.rows[0].status)){await client.query('ROLLBACK');return res.status(409).json({error:'Projetos concluídos ou cancelados não podem ser aprovados para produção.'});}
+  let order=await client.query('SELECT * FROM production_orders WHERE project_id=$1 AND company_id=$2 ORDER BY created_at LIMIT 1',[id,company]);
+  if(!order.rowCount){
+   order=await client.query("INSERT INTO production_orders(company_id,project_id,stage,priority,due_date,notes) VALUES($1,$2,'planejamento','normal',$3,'Criada automaticamente na aprovação do projeto.') RETURNING *",[company,id,p.rows[0].deadline]);
+   await client.query("INSERT INTO production_stage_logs(company_id,order_id,from_stage,to_stage,changed_by,notes) VALUES($1,$2,NULL,'planejamento',$3,'Ordem criada pela aprovação comercial.')",[company,order.rows[0].id,req.user.id]);
+  }
+  const updated=await client.query("UPDATE projects SET status='aprovado' WHERE id=$1 AND company_id=$2 RETURNING *",[id,company]);
+  await client.query('COMMIT');
+  res.json({project:updated.rows[0],order:order.rows[0],created:order.rows[0].created_at===order.rows[0].created_at});
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+
 app.get('/api/offcuts', auth, asyncRoute(async(req,res)=>{
   const result=await pool.query(`SELECT o.*,m.name AS material_name FROM offcuts o LEFT JOIN materials m ON m.id=o.material_id AND m.company_id=o.company_id WHERE o.company_id=$1 ORDER BY CASE o.status WHEN 'disponivel' THEN 0 WHEN 'reservado' THEN 1 ELSE 2 END,o.created_at DESC`,[req.user.company_id]);
   res.json(result.rows);
