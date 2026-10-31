@@ -8,8 +8,35 @@ const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
+
+const jwtSecret = process.env.JWT_SECRET?.trim();
+if (!jwtSecret || jwtSecret.length < 32) {
+  throw new Error('JWT_SECRET ausente ou muito curta. Configure no .env uma chave aleatória com pelo menos 32 caracteres.');
+}
+
+// Fail fast with an actionable message instead of allowing every API request
+// to fail later with a PostgreSQL SCRAM password error.
+const databaseUrl = process.env.DATABASE_URL?.trim();
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL não foi definida. Crie o arquivo .env na raiz do projeto e configure a conexão PostgreSQL.');
+}
+
+let databaseConnection;
+try {
+  databaseConnection = new URL(databaseUrl);
+} catch {
+  throw new Error('DATABASE_URL inválida. Use o formato postgresql://USUARIO:SENHA@HOST:5432/BANCO.');
+}
+
+if (!['postgres:', 'postgresql:'].includes(databaseConnection.protocol)) {
+  throw new Error('DATABASE_URL deve usar o protocolo postgres:// ou postgresql://.');
+}
+if (!databaseConnection.username || !databaseConnection.password) {
+  throw new Error('DATABASE_URL precisa conter usuário e senha. Codifique caracteres especiais da senha para URL (ex.: @ vira %40 e # vira %23).');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30000,
@@ -22,30 +49,57 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-const signToken = user => jwt.sign({ sub: user.id, companyId: user.company_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const signToken = user => jwt.sign({ sub: user.id, companyId: user.company_id, role: user.role }, jwtSecret, { expiresIn: '7d' });
 
 async function auth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
+
+  let payload;
   try {
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-    if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = jwt.verify(token, jwtSecret);
+  } catch {
+    return res.status(401).json({ error: 'Sessão expirada ou inválida.' });
+  }
+
+  try {
     const result = await pool.query('SELECT id, company_id, name, email, role FROM users WHERE id=$1 AND company_id=$2 AND active=TRUE', [payload.sub, payload.companyId]);
     if (!result.rowCount) return res.status(401).json({ error: 'Sessão inválida.' });
     req.user = result.rows[0];
-    next();
-  } catch { return res.status(401).json({ error: 'Sessão expirada ou inválida.' }); }
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 }
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs'];
+  const result = await pool.query(
+    'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
+    ['public', requiredTables]
+  );
+  const found = new Set(result.rows.map(row => row.table_name));
+  const missingTables = requiredTables.filter(table => !found.has(table));
+  if (missingTables.length) {
+    return res.status(503).json({
+      ok: false,
+      database: 'connected',
+      service: 'mobrix-api',
+      missingTables,
+      error: 'Banco conectado, mas a estrutura do MOBRIX está incompleta. Execute npm run db:setup.'
+    });
+  }
   res.json({ ok: true, database: 'connected', service: 'mobrix-api' });
 }));
 
 app.post('/api/auth/register', asyncRoute(async (req, res) => {
   const { company, name, email, password } = req.body || {};
-  if (!company?.trim() || !name?.trim() || !email?.trim() || !password || password.length < 8)
-    return res.status(400).json({ error: 'Informe empresa, nome, e-mail e senha com pelo menos 8 caracteres.' });
+  if ([company, name, email].some(value => typeof value !== 'string' || !value.trim()) ||
+      typeof password !== 'string' || password.length < 8 || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+    return res.status(400).json({ error: 'Informe empresa, nome, e-mail válido e senha com pelo menos 8 caracteres.' });
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -63,7 +117,8 @@ app.post('/api/auth/register', asyncRoute(async (req, res) => {
 
 app.post('/api/auth/login', asyncRoute(async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'Informe e-mail e senha.' });
+  if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || !password)
+    return res.status(400).json({ error: 'Informe e-mail e senha válidos.' });
   const result = await pool.query('SELECT id,company_id,name,email,password_hash,role FROM users WHERE email=LOWER($1) AND active=TRUE ORDER BY created_at', [email.trim()]);
   let user = null;
   for (const candidate of result.rows) {
@@ -253,8 +308,19 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 
 
 app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message });
+  console.error('[MOBRIX API]', err);
+  const knownErrors = {
+    '23503': [400, 'A operação referencia um registro inexistente ou pertencente a outra empresa.'],
+    '23505': [409, 'Já existe um registro com esses dados.'],
+    '23514': [400, 'Um dos valores informados não atende às regras do cadastro.'],
+    '22P02': [400, 'Um dos valores informados possui formato inválido.'],
+    '22007': [400, 'Uma data informada é inválida.']
+  };
+  const mapped = knownErrors[err.code];
+  const malformedJson = err instanceof SyntaxError && err.status === 400 && 'body' in err;
+  const status = malformedJson ? 400 : (mapped?.[0] || 500);
+  const message = malformedJson ? 'O corpo da requisição contém JSON inválido.' : (mapped?.[1] || (process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message));
+  res.status(status).json({ error: message, ...(process.env.NODE_ENV !== 'production' && err.code ? { code: err.code } : {}) });
 });
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
