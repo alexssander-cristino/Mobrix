@@ -85,3 +85,6 @@
 #classic-model canvas{width:100%;height:100%;display:block}
 .project-import-box .btn{white-space:nowrap}
 @media(max-width:650px){.project-import-box{align-items:stretch}.project-import-box .btn{width:100%}.project-source-preview{align-items:flex-start;flex-direction:column}.project-source-image{width:100%;height:190px}}
+
+.project-import-box{transition:border-color .16s ease,background .16s ease}
+.project-import-box.drag-active{border-color:#5c8a6a;background:#eaf3ec;box-shadow:inset 0 0 0 1px #5c8a6a}
