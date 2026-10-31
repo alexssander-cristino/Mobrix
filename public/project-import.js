@@ -103,20 +103,20 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
  const parts=[],cut=[];
  const part=(name,material,offset)=>{const g=new THREE.Group();g.userData={name,offset:offset||new THREE.Vector3()};group.add(g);parts.push(g);return g};
  const box=(g,x,y,z,w,h,d,mat)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);g.add(mesh);return mesh};
- const addBoard=(name,w,h,d,x,y,z,mat=wood,offset=new THREE.Vector3(),cutDims={length:w,width:h,thickness:d})=>{const g=part(name,mat,offset);box(g,x,y,z,w,h,d,mat);cut.push({name,width:Math.round(cutDims.width),length:Math.round(cutDims.length),thickness:Math.round(cutDims.thickness),quantity:1,areaM2:(cutDims.length*cutDims.width/1e6)});return g};
+ const addBoard=(name,w,h,d,x,y,z,mat=wood,offset=new THREE.Vector3(),cutDims={length:w,width:h,thickness:d})=>{const g=part(name,mat,offset);box(g,x,y,z,w,h,d,mat);cut.push({name,width:Math.round(cutDims.width),length:Math.round(cutDims.length),thickness:Math.round(cutDims.thickness),quantity:1,areaM2:(cutDims.length*cutDims.width/1e6),lengthScale:cutDims.lengthScale||'width',widthScale:cutDims.widthScale||'height'});return g};
  const W=source.width,H=source.height,D=source.depth,t=thickness,bottom=-H/2,top=H/2,front=D/2,back=-D/2;
  const innerW=W-2*t,innerH=H-2*t,innerD=D-t,centerW=Math.round(W/3),sideW=(innerW-centerW)/2;
  // Corpo: cada painel é uma peça independente e recebe identificação para a lista de corte.
- addBoard('Tampo',W,t,D,0,top-t/2,0,wood,new THREE.Vector3(0,35,0),{length:W,width:D,thickness:t});
- addBoard('Base',W,t,D,0,bottom+t/2,0,wood,new THREE.Vector3(0,-35,0),{length:W,width:D,thickness:t});
- addBoard('Lateral esquerda',t,innerH,innerD,-W/2+t/2,0,0,wood,new THREE.Vector3(-35,0,0),{length:innerH,width:innerD,thickness:t});
- addBoard('Lateral direita',t,innerH,innerD,W/2-t/2,0,0,wood,new THREE.Vector3(35,0,0),{length:innerH,width:innerD,thickness:t});
- addBoard('Fundo',innerW,innerH,backThickness,0,0,back+backThickness/2,backMat,new THREE.Vector3(0,0,-35),{length:innerW,width:innerH,thickness:backThickness});
+ addBoard('Tampo',W,t,D,0,top-t/2,0,wood,new THREE.Vector3(0,35,0),{length:W,width:D,thickness:t,lengthScale:'width',widthScale:'depth'});
+ addBoard('Base',W,t,D,0,bottom+t/2,0,wood,new THREE.Vector3(0,-35,0),{length:W,width:D,thickness:t,lengthScale:'width',widthScale:'depth'});
+ addBoard('Lateral esquerda',t,innerH,innerD,-W/2+t/2,0,0,wood,new THREE.Vector3(-35,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Lateral direita',t,innerH,innerD,W/2-t/2,0,0,wood,new THREE.Vector3(35,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Fundo',innerW,innerH,backThickness,0,0,back+backThickness/2,backMat,new THREE.Vector3(0,0,-35),{length:innerW,width:innerH,thickness:backThickness,lengthScale:'width',widthScale:'height'});
  const divX=centerW/2+t/2;
- addBoard('Divisória esquerda',t,innerH,innerD,-divX,0,0,inner,new THREE.Vector3(-18,0,0),{length:innerH,width:innerD,thickness:t});
- addBoard('Divisória direita',t,innerH,innerD,divX,0,0,inner,new THREE.Vector3(18,0,0),{length:innerH,width:innerD,thickness:t});
+ addBoard('Divisória esquerda',t,innerH,innerD,-divX,0,0,inner,new THREE.Vector3(-18,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Divisória direita',t,innerH,innerD,divX,0,0,inner,new THREE.Vector3(18,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
  const shelfY=bottom+t+(innerH*.52);
- if(Number(spec.shelves)>0)addBoard('Prateleira do nicho',centerW-t, t, innerD-t,0,shelfY,0,wood,new THREE.Vector3(0,0,20),{length:innerD-t,width:centerW-t,thickness:t});
+ if(Number(spec.shelves)>0)addBoard('Prateleira do nicho',centerW-t, t, innerD-t,0,shelfY,0,wood,new THREE.Vector3(0,0,20),{length:innerD-t,width:centerW-t,thickness:t,lengthScale:'depth',widthScale:'width'});
  // Portas com pivô real na lateral externa: podem ser abertas para conferir o interior.
  const doorWidth=Math.max(100,sideW-t*.35),doorHeight=innerH-t*.25,doorY=bottom+t+doorHeight/2,hingeZ=front+t*.52;
  const hinge=(side)=>{
@@ -126,7 +126,7 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
   box(handle,0,0,0,7,78,7,metal);box(handle,0,-34,-3,12,5,5,metal);box(handle,0,34,-3,12,5,5,metal);
   // Dobradiças ilustrativas; a quantidade é estimada conforme a altura.
   const hingeCount=doorHeight>700?3:2;for(let n=0;n<hingeCount;n++){const hy=-doorHeight/2+90+n*(doorHeight-180)/Math.max(1,hingeCount-1);const h=new THREE.Mesh(new THREE.CylinderGeometry(7,7,28,12),metal);h.rotation.z=Math.PI/2;h.position.set(side<0?0:-side*doorWidth,hy,-t/2-2);pivot.add(h)}
-  cut.push({name:side<0?'Porta esquerda':'Porta direita',width:Math.round(doorWidth),length:Math.round(doorHeight),thickness:t,quantity:1,areaM2:doorWidth*doorHeight/1e6});
+  cut.push({name:side<0?'Porta esquerda':'Porta direita',width:Math.round(doorWidth),length:Math.round(doorHeight),thickness:t,quantity:1,areaM2:doorWidth*doorHeight/1e6,lengthScale:'height',widthScale:'width'});
   return pivot;
  };
  const leftDoor=hinge(-1),rightDoor=hinge(1);
@@ -142,7 +142,7 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
  const toggleDoors=value=>{doorsOpen=typeof value==='boolean'?value:!doorsOpen;leftDoor.rotation.y=doorsOpen?-.95:0;rightDoor.rotation.y=doorsOpen?.95:0;return doorsOpen};
  let raf=0,dead=false;const observer=new ResizeObserver(()=>{if(dead)return;const w=host.clientWidth||700,h=host.clientHeight||460;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()});observer.observe(host);
  const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};fit();animate();
- const getCutList=()=>cut.map(x=>({...x,length:Math.round(x.length*current.height/H),width:Math.round(x.width*current.width/W),thickness:x.thickness,areaM2:(x.length*current.height/H)*(x.width*current.width/W)/1e6,quantity:x.quantity}));
+ const getCutList=()=>cut.map(x=>{const scale={width:current.width/W,height:current.height/H,depth:current.depth/D};const length=Math.round(x.length*scale[x.lengthScale]),width=Math.round(x.width*scale[x.widthScale]);return{...x,length,width,thickness:x.thickness,areaM2:length*width/1e6,quantity:x.quantity}});
  const summary={boardCount:cut.reduce((n,p)=>n+p.quantity,0),areaM2:cut.reduce((n,p)=>n+p.areaM2*p.quantity,0),thickness,backThickness,finish:spec.finish||'Carvalho',dimensions:{...source},centralShelfCount,doors:2};
  return{resize:resizeModel,reset:fit,setExploded,toggleDoors,getCutList,summary,sourceSizeMm,destroy(){dead=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();renderer.domElement.remove();group.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.()})}};
 }
