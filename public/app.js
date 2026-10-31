@@ -188,7 +188,7 @@ async function importClassicProject(file){
   const preview=$('#project-source-preview');
   if(preview){preview.classList.remove('hidden');preview.innerHTML=details.kind==='drawing'?'<div class="project-source-image"><img src="'+details.previewUrl+'" alt="Prévia do projeto enviado"></div><div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>'+(details.pages?details.pages+' página(s) · ':'')+(details.entities?details.entities+' entidades · ':'')+Math.max(1,Math.round(details.size/1024))+' KB</small></div>':'<div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>Dimensões 3D: carregando...</small></div>'}
   if(status)status.textContent=details.notes;
-  if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}
+  if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}const modelRoot=$('#classic-model');if(modelRoot)modelRoot.innerHTML='';
   await updateClassicModel();
   if(details.kind==='model'&&preview&&importedModelViewer?.size)preview.querySelector('small').textContent='Dimensões aproximadas: '+importedModelViewer.size.x.toFixed(1)+' × '+importedModelViewer.size.y.toFixed(1)+' × '+importedModelViewer.size.z.toFixed(1)+' unidades';
   toast(details.kind==='model'?'Modelo 3D importado com sucesso.':'Projeto carregado. Confira as medidas e o modelo 3D.');
