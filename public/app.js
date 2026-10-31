@@ -3,7 +3,7 @@ const state = { token: localStorage.getItem('mobrix_token'), user: null, company
 try { state.classic = { ...state.classic, ...JSON.parse(localStorage.getItem('mobrix_classic') || '{}') }; } catch {}
 function saveClassic(){ try { localStorage.setItem('mobrix_classic', JSON.stringify(state.classic)); } catch {} }
 const pageMeta = {
-  dashboard:['PAINEL DE CONTROLE','Visão geral'],
+  dashboard:['PAINEL DE CONTROLE','Dashboard'],
   projects:['GESTÃO DE PROJETOS','Projetos e móveis'],
   orders:['CHÃO DE FÁBRICA','Ordens de produção'],
   engineering:['ENGENHARIA','Ficha técnica e peças'],
@@ -39,6 +39,7 @@ $('#profile-shortcut').addEventListener('click',()=>navigate('settings'));
 $('#mobile-menu').addEventListener('click',()=>{const open=$('#sidebar').classList.toggle('open');$('#sidebar-overlay')?.classList.toggle('visible',open)});
 $('#sidebar-collapse').addEventListener('click',()=>{state.sidebarCollapsed=!state.sidebarCollapsed;$('#sidebar').classList.toggle('collapsed',state.sidebarCollapsed);localStorage.setItem('madevix_sidebar_collapsed',state.sidebarCollapsed?'1':'0')});
 $('#alerts-button').addEventListener('click',showOperationalAlerts);
+$('#global-search-results').addEventListener('click',e=>{const item=e.target.closest('[data-search-page]');if(item)navigate(item.dataset.searchPage)});
 $('#global-search').addEventListener('input',handleGlobalSearch);
 $('#global-search').addEventListener('keydown',e=>{if(e.key==='Escape')$('#global-search-results').classList.add('hidden');if(e.key==='Enter'){const first=$('#global-search-results [data-search-page]');if(first)navigate(first.dataset.searchPage)}});
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#global-search')?.focus()}});
