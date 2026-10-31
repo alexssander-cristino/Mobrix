@@ -75,7 +75,7 @@ async function auth(req, res, next) {
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
-  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs'];
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations'];
   const result = await pool.query(
     'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
     ['public', requiredTables]
@@ -303,6 +303,65 @@ app.post('/api/projects/:id/approve',auth,asyncRoute(async(req,res)=>{
   await client.query('COMMIT');
   res.json({project:updated.rows[0],order:order.rows[0],created});
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+
+
+/* Compras: pedido, recebimento parcial e entrada física no estoque na mesma transação. */
+app.get('/api/purchase-orders',auth,asyncRoute(async(req,res)=>{
+ const result=await pool.query(`SELECT po.*,p.title project_title,COALESCE(json_agg(json_build_object('id',i.id,'material_id',i.material_id,'material_name',m.name,'quantity',i.quantity,'received_quantity',i.received_quantity,'unit_cost',i.unit_cost) ORDER BY m.name) FILTER(WHERE i.id IS NOT NULL),'[]') items FROM purchase_orders po LEFT JOIN projects p ON p.id=po.project_id AND p.company_id=po.company_id LEFT JOIN purchase_order_items i ON i.purchase_order_id=po.id AND i.company_id=po.company_id LEFT JOIN materials m ON m.id=i.material_id AND m.company_id=i.company_id WHERE po.company_id=$1 GROUP BY po.id,p.title ORDER BY po.created_at DESC`,[req.user.company_id]);
+ res.json(result.rows);
+}));
+app.post('/api/purchase-orders',auth,asyncRoute(async(req,res)=>{
+ const b=req.body||{},items=Array.isArray(b.items)?b.items:[];
+ if(!items.length)return res.status(400).json({error:'Adicione ao menos um material à compra.'});
+ const client=await pool.connect(),company=req.user.company_id;
+ try{await client.query('BEGIN');
+ if(b.project_id){const p=await client.query('SELECT id FROM projects WHERE id=$1 AND company_id=$2',[b.project_id,company]);if(!p.rowCount){await client.query('ROLLBACK');return res.status(400).json({error:'Projeto inválido.'});}}
+ const po=await client.query("INSERT INTO purchase_orders(company_id,project_id,supplier,notes,status) VALUES($1,$2,$3,$4,'solicitada') RETURNING *",[company,b.project_id||null,b.supplier||null,b.notes||null]);
+ for(const item of items){const qty=Number(item.quantity),cost=Number(item.unit_cost||0);if(!item.material_id||!(qty>0)||cost<0)throw Object.assign(new Error('Item de compra inválido.'),{status:400});const m=await client.query('SELECT id FROM materials WHERE id=$1 AND company_id=$2',[item.material_id,company]);if(!m.rowCount)throw Object.assign(new Error('Material não encontrado nesta empresa.'),{status:400});await client.query('INSERT INTO purchase_order_items(company_id,purchase_order_id,material_id,quantity,unit_cost) VALUES($1,$2,$3,$4,$5)',[company,po.rows[0].id,item.material_id,qty,cost]);}
+ await client.query('COMMIT');res.status(201).json(po.rows[0]);
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+app.post('/api/purchase-orders/:id/receive',auth,asyncRoute(async(req,res)=>{
+ const client=await pool.connect(),company=req.user.company_id,b=req.body||{},itemId=b.item_id,qty=Number(b.quantity);
+ if(!itemId||!(qty>0)){client.release();return res.status(400).json({error:'Informe item e quantidade recebida.'});}
+ try{await client.query('BEGIN');
+ const item=await client.query(`SELECT i.*,po.status order_status FROM purchase_order_items i JOIN purchase_orders po ON po.id=i.purchase_order_id AND po.company_id=i.company_id WHERE i.id=$1 AND i.purchase_order_id=$2 AND i.company_id=$3 FOR UPDATE OF i,po`,[itemId,req.params.id,company]);
+ if(!item.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Item de compra não encontrado.'});}
+ const row=item.rows[0];if(['cancelada','recebida'].includes(row.order_status)||Number(row.received_quantity)+qty>Number(row.quantity)){await client.query('ROLLBACK');return res.status(409).json({error:'Quantidade recebida excede o saldo ou a compra não aceita recebimento.'});}
+ const material=await client.query('SELECT quantity FROM materials WHERE id=$1 AND company_id=$2 FOR UPDATE',[row.material_id,company]);
+ await client.query('UPDATE materials SET quantity=quantity+$1,updated_at=NOW() WHERE id=$2 AND company_id=$3',[qty,row.material_id,company]);
+ await client.query("INSERT INTO stock_movements(company_id,material_id,movement_type,quantity,reason) VALUES($1,$2,'entrada',$3,$4)",[company,row.material_id,qty,'Recebimento da compra '+req.params.id]);
+ const received=await client.query('UPDATE purchase_order_items SET received_quantity=received_quantity+$1 WHERE id=$2 RETURNING *',[qty,itemId]);
+ const pending=await client.query('SELECT COUNT(*)::int total FROM purchase_order_items WHERE purchase_order_id=$1 AND received_quantity<quantity',[req.params.id]);
+ await client.query("UPDATE purchase_orders SET status=$1,updated_at=NOW() WHERE id=$2 AND company_id=$3",[pending.rows[0].total?'solicitada':'recebida',req.params.id,company]);
+ await client.query('COMMIT');res.json({item:received.rows[0],fullyReceived:pending.rows[0].total===0});
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+/* Reserva de saldo físico. Não baixa estoque até registrar o consumo real. */
+app.post('/api/projects/:id/reserve-materials',auth,asyncRoute(async(req,res)=>{
+ const client=await pool.connect(),company=req.user.company_id,id=req.params.id;
+ try{await client.query('BEGIN');
+ const p=await client.query('SELECT id FROM projects WHERE id=$1 AND company_id=$2 FOR UPDATE',[id,company]);if(!p.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Projeto não encontrado.'});}
+ const requirements=await client.query('SELECT material_id,SUM(quantity)::numeric quantity FROM project_parts WHERE project_id=$1 AND company_id=$2 AND material_id IS NOT NULL GROUP BY material_id',[id,company]);
+ const result=[];
+ for(const reqm of requirements.rows){const m=await client.query('SELECT id,name,quantity FROM materials WHERE id=$1 AND company_id=$2 FOR UPDATE',[reqm.material_id,company]);const reserved=await client.query("SELECT COALESCE(SUM(quantity-consumed_quantity),0)::numeric quantity FROM material_reservations WHERE material_id=$1 AND company_id=$2 AND status='reservado'",[reqm.material_id,company]);const already=await client.query("SELECT * FROM material_reservations WHERE project_id=$1 AND material_id=$2 AND company_id=$3 AND status='reservado' FOR UPDATE",[id,reqm.material_id,company]);const needed=Math.max(0,Number(reqm.quantity)-(already.rowCount?Number(already.rows[0].quantity):0));const available=Number(m.rows[0].quantity)-Number(reserved.rows[0].quantity)+(already.rowCount?Number(already.rows[0].quantity)-Number(already.rows[0].consumed_quantity):0);if(needed>available){throw Object.assign(new Error('Estoque insuficiente para '+m.rows[0].name+'. Disponível para reservar: '+Math.max(0,available)+'. Necessário: '+needed+'.'),{status:409});}if(needed>0){if(already.rowCount)await client.query('UPDATE material_reservations SET quantity=quantity+$1 WHERE id=$2',[needed,already.rows[0].id]);else await client.query("INSERT INTO material_reservations(company_id,project_id,material_id,quantity) VALUES($1,$2,$3,$4)",[company,id,reqm.material_id,needed]);}result.push({material:m.rows[0].name,required:Number(reqm.quantity),reserved:needed,availableBefore:available});}
+ await client.query('COMMIT');res.json({project_id:id,reservations:result});
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+app.post('/api/projects/:id/consume-materials',auth,asyncRoute(async(req,res)=>{
+ const client=await pool.connect(),company=req.user.company_id,id=req.params.id,b=req.body||{};
+ try{await client.query('BEGIN');
+ const p=await client.query('SELECT id FROM projects WHERE id=$1 AND company_id=$2 FOR UPDATE',[id,company]);if(!p.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Projeto não encontrado.'});}
+ const reservations=await client.query("SELECT r.*,m.name FROM material_reservations r JOIN materials m ON m.id=r.material_id AND m.company_id=r.company_id WHERE r.project_id=$1 AND r.company_id=$2 AND r.status='reservado' FOR UPDATE OF r,m",[id,company]);
+ if(!reservations.rowCount){await client.query('ROLLBACK');return res.status(409).json({error:'Este projeto não possui materiais reservados.'});}
+ const consumed=[];
+ for(const r of reservations.rows){const remain=Number(r.quantity)-Number(r.consumed_quantity);const qty=b.materials?.[r.material_id]===undefined?remain:Number(b.materials[r.material_id]);if(!(qty>0)||qty>remain)throw Object.assign(new Error('Consumo inválido para '+r.name+'.'),{status:400});const m=await client.query('SELECT quantity FROM materials WHERE id=$1 AND company_id=$2 FOR UPDATE',[r.material_id,company]);if(Number(m.rows[0].quantity)<qty)throw Object.assign(new Error('Saldo físico insuficiente para '+r.name+'.'),{status:409});await client.query('UPDATE materials SET quantity=quantity-$1,updated_at=NOW() WHERE id=$2 AND company_id=$3',[qty,r.material_id,company]);await client.query("INSERT INTO stock_movements(company_id,material_id,movement_type,quantity,reason) VALUES($1,$2,'saida',$3,$4)",[company,r.material_id,qty,'Consumo do projeto '+id]);await client.query("UPDATE material_reservations SET consumed_quantity=consumed_quantity+$1,status=CASE WHEN consumed_quantity+$1>=quantity THEN 'consumido' ELSE 'reservado' END WHERE id=$2",[qty,r.id]);consumed.push({material:r.name,quantity:qty});}
+ await client.query('COMMIT');res.json({project_id:id,consumed});
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}));
+app.post('/api/projects/:id/release-reservations',auth,asyncRoute(async(req,res)=>{
+ const result=await pool.query("UPDATE material_reservations SET status='liberado' WHERE project_id=$1 AND company_id=$2 AND status='reservado' RETURNING id,material_id,quantity-consumed_quantity AS released_quantity",[req.params.id,req.user.company_id]);res.json({released:result.rows});
 }));
 
 app.get('/api/offcuts', auth, asyncRoute(async(req,res)=>{
