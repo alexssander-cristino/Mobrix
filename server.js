@@ -64,9 +64,12 @@ app.post('/api/auth/register', asyncRoute(async (req, res) => {
 app.post('/api/auth/login', asyncRoute(async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Informe e-mail e senha.' });
-  const result = await pool.query('SELECT id,company_id,name,email,password_hash,role FROM users WHERE email=LOWER($1) AND active=TRUE ORDER BY created_at LIMIT 1', [email.trim()]);
-  const user = result.rows[0];
-  if (!user || !(await bcrypt.compare(password, user.password_hash))) return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
+  const result = await pool.query('SELECT id,company_id,name,email,password_hash,role FROM users WHERE email=LOWER($1) AND active=TRUE ORDER BY created_at', [email.trim()]);
+  let user = null;
+  for (const candidate of result.rows) {
+    if (await bcrypt.compare(password, candidate.password_hash)) { user = candidate; break; }
+  }
+  if (!user) return res.status(401).json({ error: 'E-mail ou senha inválidos.' });
   delete user.password_hash;
   res.json({ token: signToken(user), user });
 }));
