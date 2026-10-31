@@ -101,7 +101,7 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
  const finish=String(spec.finish||'Carvalho').toLowerCase(),woodColor=/branco/.test(finish)?0xe7e3dc:/nogueira/.test(finish)?0x79563e:/preto|grafite/.test(finish)?0x44484b:0xc99b68;
  const group=new THREE.Group(),wood=new THREE.MeshStandardMaterial({color:woodColor,roughness:.78}),inner=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xd8d3ca:0x987451,roughness:.85}),backMat=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xe0ddd5:0x987451,roughness:.9}),metal=new THREE.MeshStandardMaterial({color:0xbfc3c4,metalness:.78,roughness:.28}),dark=new THREE.MeshStandardMaterial({color:0x4a4d4b,roughness:.6});
  const parts=[],cut=[];
- const part=(name,material,offset)=>{const g=new THREE.Group();g.userData={name,offset:offset||new THREE.Vector3()};group.add(g);parts.push(g);return g};
+ const part=(name,material,offset)=>{const g=new THREE.Group();g.userData={name,offset:offset||new THREE.Vector3(),basePosition:g.position.clone()};group.add(g);parts.push(g);return g};
  const box=(g,x,y,z,w,h,d,mat)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);g.add(mesh);return mesh};
  const addBoard=(name,w,h,d,x,y,z,mat=wood,offset=new THREE.Vector3(),cutDims={length:w,width:h,thickness:d})=>{const g=part(name,mat,offset);box(g,x,y,z,w,h,d,mat);cut.push({name,width:Math.round(cutDims.width),length:Math.round(cutDims.length),thickness:Math.round(cutDims.thickness),quantity:1,areaM2:(cutDims.length*cutDims.width/1e6),lengthScale:cutDims.lengthScale||'width',widthScale:cutDims.widthScale||'height'});return g};
  const W=source.width,H=source.height,D=source.depth,t=thickness,bottom=-H/2,top=H/2,front=D/2,back=-D/2;
@@ -120,7 +120,7 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
  // Portas com pivô real na lateral externa: podem ser abertas para conferir o interior.
  const doorWidth=Math.max(100,sideW-t*.35),doorHeight=innerH-t*.25,doorY=bottom+t+doorHeight/2,hingeZ=front+t*.52;
  const hinge=(side)=>{
-  const pivot=new THREE.Group(),hingeX=side<0?-W/2+t:W/2-t;pivot.position.set(hingeX,doorY,hingeZ);group.add(pivot);parts.push(pivot);pivot.userData={name:side<0?'Porta esquerda':'Porta direita',offset:new THREE.Vector3(side*35,0,25)};
+  const pivot=new THREE.Group(),hingeX=side<0?-W/2+t:W/2-t;pivot.position.set(hingeX,doorY,hingeZ);group.add(pivot);parts.push(pivot);pivot.userData={name:side<0?'Porta esquerda':'Porta direita',offset:new THREE.Vector3(side*35,0,25),basePosition:pivot.position.clone()};
   const centerX=side<0?doorWidth/2:-doorWidth/2;box(pivot,centerX,0,0,doorWidth,doorHeight,t,wood);
   const handleX=side<0?doorWidth-34:-doorWidth+34,handle=new THREE.Group();handle.position.set(handleX,0,t/2+5);pivot.add(handle);
   box(handle,0,0,0,7,78,7,metal);box(handle,0,-34,-3,12,5,5,metal);box(handle,0,34,-3,12,5,5,metal);
@@ -138,7 +138,7 @@ export async function mountSpecifiedFurniture(host,details,dimensions={}){
  const camera=new THREE.PerspectiveCamera(42,Math.max(.1,host.clientWidth/Math.max(1,host.clientHeight)),.01,100000),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.screenSpacePanning=true;
  const fit=()=>{const maxDim=Math.max(current.width,current.height,current.depth),dist=maxDim*2.35;camera.position.set(dist*.95,dist*.7,dist*1.1);camera.near=Math.max(.001,maxDim/10000);camera.far=maxDim*100;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.minDistance=maxDim*.3;controls.maxDistance=maxDim*12;controls.update()};
  const resizeModel=d=>{current={width:Number(d.width)||current.width,height:Number(d.height)||current.height,depth:Number(d.depth)||current.depth};group.scale.set(current.width/W,current.height/H,current.depth/D);fit();return{...current}};
- const setExploded=value=>{exploded=typeof value==='boolean'?value:!exploded;for(const p of parts){const o=p.userData.offset||new THREE.Vector3();p.position.set(exploded?o.x:0,exploded?o.y:0,exploded?o.z:0)}return exploded};
+ const setExploded=value=>{exploded=typeof value==='boolean'?value:!exploded;for(const p of parts){const o=p.userData.offset||new THREE.Vector3(),b=p.userData.basePosition||new THREE.Vector3();p.position.set(b.x+(exploded?o.x:0),b.y+(exploded?o.y:0),b.z+(exploded?o.z:0))}return exploded};
  const toggleDoors=value=>{doorsOpen=typeof value==='boolean'?value:!doorsOpen;leftDoor.rotation.y=doorsOpen?-.95:0;rightDoor.rotation.y=doorsOpen?.95:0;return doorsOpen};
  let raf=0,dead=false;const observer=new ResizeObserver(()=>{if(dead)return;const w=host.clientWidth||700,h=host.clientHeight||460;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()});observer.observe(host);
  const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};fit();animate();
