@@ -694,15 +694,14 @@ tbody tr{transition:background .15s ease}tbody tr:hover{background:#fdf8f8}
 }
 
 
-/* Sidebar typography refinement */
-.sidebar .nav-item,.sidebar .sidebar-settings-link{font-size:8px!important;letter-spacing:-.15px}
-.sidebar .nav-label{font-size:7px;letter-spacing:1.05px}
-.sidebar .nav-caption{font-size:7px;letter-spacing:1.2px}
-.sidebar-brand .brand-copy strong{font-size:13px}
-.sidebar-brand .brand-copy small{font-size:7px;letter-spacing:.85px}
-.company-copy small{font-size:7px}
-.company-copy strong{font-size:10px}
-.sidebar .user-meta strong{font-size:9.5px}
-.sidebar .user-meta small{font-size:8px}
-.sidebar .nav-item,.sidebar .sidebar-settings-link{min-height:37px}
-.sidebar .nav{gap:12px}
+/* Sidebar typography refinement — compact labels */
+.sidebar .nav-item,
+.sidebar .sidebar-settings-link,
+.sidebar .nav-item .nav-text,
+.sidebar .sidebar-settings-link .nav-text{font-size:7px!important;line-height:1.15!important;letter-spacing:0!important;font-weight:500!important}
+.sidebar .nav-item{min-height:32px!important;padding-top:0!important;padding-bottom:0!important;gap:8px!important}
+.sidebar .sidebar-settings-link{min-height:32px!important}
+.sidebar .nav-icon{width:16px!important;height:16px!important}
+.sidebar .nav-icon svg{width:14px!important;height:14px!important}
+.sidebar .nav-label,.sidebar .nav-caption{font-size:6px!important;letter-spacing:.8px!important}
+.sidebar .nav{gap:8px!important}
