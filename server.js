@@ -9,6 +9,11 @@ const path = require('path');
 
 const app = express();
 
+const jwtSecret = process.env.JWT_SECRET?.trim();
+if (!jwtSecret || jwtSecret.length < 32) {
+  throw new Error('JWT_SECRET ausente ou muito curta. Configure no .env uma chave aleatória com pelo menos 32 caracteres.');
+}
+
 // Fail fast with an actionable message instead of allowing every API request
 // to fail later with a PostgreSQL SCRAM password error.
 const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -44,23 +49,48 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const asyncRoute = fn => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
-const signToken = user => jwt.sign({ sub: user.id, companyId: user.company_id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+const signToken = user => jwt.sign({ sub: user.id, companyId: user.company_id, role: user.role }, jwtSecret, { expiresIn: '7d' });
 
 async function auth(req, res, next) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+  if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
+
+  let payload;
   try {
-    const header = req.headers.authorization || '';
-    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
-    if (!token) return res.status(401).json({ error: 'Faça login para continuar.' });
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = jwt.verify(token, jwtSecret);
+  } catch {
+    return res.status(401).json({ error: 'Sessão expirada ou inválida.' });
+  }
+
+  try {
     const result = await pool.query('SELECT id, company_id, name, email, role FROM users WHERE id=$1 AND company_id=$2 AND active=TRUE', [payload.sub, payload.companyId]);
     if (!result.rowCount) return res.status(401).json({ error: 'Sessão inválida.' });
     req.user = result.rows[0];
-    next();
-  } catch { return res.status(401).json({ error: 'Sessão expirada ou inválida.' }); }
+    return next();
+  } catch (error) {
+    return next(error);
+  }
 }
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs'];
+  const result = await pool.query(
+    'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
+    ['public', requiredTables]
+  );
+  const found = new Set(result.rows.map(row => row.table_name));
+  const missingTables = requiredTables.filter(table => !found.has(table));
+  if (missingTables.length) {
+    return res.status(503).json({
+      ok: false,
+      database: 'connected',
+      service: 'mobrix-api',
+      missingTables,
+      error: 'Banco conectado, mas a estrutura do MOBRIX está incompleta. Execute npm run db:setup.'
+    });
+  }
   res.json({ ok: true, database: 'connected', service: 'mobrix-api' });
 }));
 
@@ -275,8 +305,18 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 
 
 app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message });
+  console.error('[MOBRIX API]', err);
+  const knownErrors = {
+    '23503': [400, 'A operação referencia um registro inexistente ou pertencente a outra empresa.'],
+    '23505': [409, 'Já existe um registro com esses dados.'],
+    '23514': [400, 'Um dos valores informados não atende às regras do cadastro.'],
+    '22P02': [400, 'Um dos valores informados possui formato inválido.'],
+    '22007': [400, 'Uma data informada é inválida.']
+  };
+  const mapped = knownErrors[err.code];
+  const status = mapped?.[0] || 500;
+  const message = mapped?.[1] || (process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message);
+  res.status(status).json({ error: message, ...(process.env.NODE_ENV !== 'production' && err.code ? { code: err.code } : {}) });
 });
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
