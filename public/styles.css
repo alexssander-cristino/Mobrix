@@ -496,9 +496,10 @@ tbody tr{transition:background .15s ease}tbody tr:hover{background:#fdf8f8}
  .table-wrap tbody{display:grid;gap:8px;padding:9px}
  .table-wrap tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;background:#fff;border:1px solid #e8e9ec;border-radius:9px;padding:5px;overflow:hidden}
  .table-wrap tbody td{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-width:0;padding:8px;border:0;white-space:normal;overflow-wrap:anywhere;font-size:10px}
+ .table-wrap tbody td:not([data-label]):before{display:none}
  .table-wrap tbody td:before{content:attr(data-label);font-size:8px;letter-spacing:.45px;text-transform:uppercase;font-weight:800;color:#9297a0}
  .table-wrap tbody td[colspan]{grid-column:1/-1;display:block;text-align:center;padding:24px 8px}
  .table-wrap tbody td[colspan]:before{display:none}
  .table-wrap tbody td button,.table-wrap tbody td select{max-width:100%}
- .model-cut-table{min-width:560px}
+ .model-cut-table{min-width:560px;display:block;overflow-x:auto}
 }
