@@ -300,7 +300,7 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
     await client.query('BEGIN');
     const current=await client.query('SELECT id,stage FROM production_orders WHERE id=$1 AND company_id=$2 FOR UPDATE',[req.params.id,req.user.company_id]);
     if(!current.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Ordem não encontrada.'});}
-    const updated=await client.query("UPDATE production_orders SET stage=$1,started_at=CASE WHEN $1 <> 'planejamento' AND started_at IS NULL THEN NOW() ELSE started_at END WHERE id=$2 AND company_id=$3 RETURNING *",[stage,req.params.id,req.user.company_id]);
+    const updated=await client.query("UPDATE production_orders SET stage=$1::varchar,started_at=CASE WHEN $1::varchar <> 'planejamento' AND started_at IS NULL THEN NOW() ELSE started_at END WHERE id=$2 AND company_id=$3 RETURNING *",[stage,req.params.id,req.user.company_id]);
     await client.query('INSERT INTO production_stage_logs(company_id,order_id,from_stage,to_stage,changed_by,notes) VALUES($1,$2,$3,$4,$5,$6)',[req.user.company_id,req.params.id,current.rows[0].stage,stage,req.user.id,req.body.notes||null]);
     await client.query('COMMIT');res.json(updated.rows[0]);
   }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
