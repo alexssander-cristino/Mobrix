@@ -148,7 +148,7 @@ app.get('/api/dashboard', auth, asyncRoute(async (req, res) => {
 
 const resources = {
   customers: { table: 'customers', fields: ['name','phone','email','document','address','notes'], required: ['name'], order: 'created_at DESC' },
-  materials: { table: 'materials', fields: ['name','category','unit','quantity','minimum_quantity','unit_cost','supplier'], required: ['name'], order: 'name ASC' },
+  materials: { table: 'materials', fields: ['name','category','unit','quantity','minimum_quantity','unit_cost','supplier','sheet_length_mm','sheet_width_mm'], required: ['name'], order: 'name ASC' },
   projects: { table: 'projects', fields: ['customer_id','title','description','status','estimated_cost','sale_price','deadline'], required: ['title'], order: 'created_at DESC' },
   orders: { table: 'production_orders', fields: ['project_id','stage','priority','due_date','notes'], required: ['project_id'], order: 'created_at DESC' },
   finance: { table: 'finance_transactions', fields: ['project_id','description','transaction_type','amount','due_date','paid_at'], required: ['description','transaction_type','amount'], order: 'created_at DESC' }
@@ -233,6 +233,38 @@ app.delete('/api/engineering/parts/:id', auth, asyncRoute(async (req,res)=>{
   const result=await pool.query('DELETE FROM project_parts WHERE id=$1 AND company_id=$2 RETURNING id',[req.params.id,req.user.company_id]);
   if(!result.rowCount)return res.status(404).json({error:'Peça não encontrada.'});
   res.status(204).end();
+}));
+
+
+app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
+ const projectId=String(req.query.project_id||''),company=req.user.company_id;
+ if(!projectId)return res.status(400).json({error:'Selecione um projeto.'});
+ const [project,parts,materials,offcuts]=await Promise.all([
+  pool.query('SELECT id,title FROM projects WHERE id=$1 AND company_id=$2',[projectId,company]),
+  pool.query('SELECT pp.*,m.name material_name FROM project_parts pp LEFT JOIN materials m ON m.id=pp.material_id AND m.company_id=pp.company_id WHERE pp.company_id=$1 AND pp.project_id=$2 ORDER BY pp.length_mm*pp.width_mm DESC',[company,projectId]),
+  pool.query('SELECT * FROM materials WHERE company_id=$1',[company]),
+  pool.query("SELECT * FROM offcuts WHERE company_id=$1 AND status='disponivel' ORDER BY length_mm*width_mm DESC",[company])
+ ]);
+ if(!project.rowCount)return res.status(404).json({error:'Projeto não encontrado.'});
+ const map=new Map(materials.rows.map(m=>[m.id,m])),groups=new Map();
+ for(const p of parts.rows){if(!p.material_id)continue;const a=groups.get(p.material_id)||[];for(let i=0;i<Number(p.quantity);i++)a.push({name:p.name,l:+p.length_mm,w:+p.width_mm,t:+p.thickness_mm,grain:p.grain_direction});groups.set(p.material_id,a)}
+ const output=[];
+ for(const [id,pieces] of groups){
+  const m=map.get(id);if(!m)continue;
+  const sources=offcuts.rows.filter(o=>o.material_id===id&&Math.abs(+o.thickness_mm-pieces[0].t)<.01).map(o=>({kind:'retalho',label:o.label,free:[{w:+o.length_mm,h:+o.width_mm}]}));
+  const sl=+m.sheet_length_mm||0,sw=+m.sheet_width_mm||0;
+  if(sl&&sw&&String(m.unit).toLowerCase().includes('chap'))for(let i=0;i<Math.floor(+m.quantity||0);i++)sources.push({kind:'chapa',label:m.name+' · chapa '+(i+1),free:[{w:sl,h:sw}]});
+  const used=[],missing=[];
+  for(const p of pieces){let best=null;for(const s of sources)for(let i=0;i<s.free.length;i++){const f=s.free[i],normal=p.l<=f.w&&p.w<=f.h,rot=p.grain==='livre'&&p.w<=f.w&&p.l<=f.h;if(normal||rot){const waste=f.w*f.h-p.l*p.w;if(!best||waste<best.waste)best={s,i,f,rot,waste}}}
+   if(!best){missing.push(p);continue}
+   const {s,i,f,rot}=best,w=rot?p.w:p.l,h=rot?p.l:p.w;s.free.splice(i,1);if(f.w-w>0&&h>0)s.free.push({w:f.w-w,h});if(f.h-h>0&&f.w>0)s.free.push({w:f.w,h:f.h-h});used.push({piece:p.name,dimensions:p.l+' × '+p.w+' mm',source:s.label,kind:s.kind});
+  }
+  const sourceNames=[...new Set(used.map(x=>x.source))],usedOffcuts=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='retalho')).length,usedSheets=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='chapa')).length;
+  const area=missing.reduce((n,p)=>n+p.l*p.w,0),sheetArea=sl*sw,sheets=sheetArea?Math.ceil(area/sheetArea):0;
+  output.push({material_id:id,material:m.name,required:pieces.length,allocated:used.length,missing:missing.length,usedOffcuts,usedSheets,purchaseSheets:sheets,estimatedPurchase:sheets*(+m.unit_cost||0),sheetConfigured:!!sheetArea,sheet:sheetArea?sl+' × '+sw+' mm':'Dimensões não configuradas',assigned:used,unallocated:missing.map(p=>({name:p.name,dimensions:p.l+' × '+p.w+' mm'}))});
+ }
+ const unlinked=parts.rows.filter(p=>!p.material_id).map(p=>p.name);
+ res.json({project:project.rows[0],materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+x.purchaseSheets,0),estimatedPurchase:output.reduce((n,x)=>n+x.estimatedPurchase,0)}});
 }));
 
 app.get('/api/offcuts', auth, asyncRoute(async(req,res)=>{
