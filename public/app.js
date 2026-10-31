@@ -1,5 +1,7 @@
 const $ = (s, root=document) => root.querySelector(s);
-const state = { token: localStorage.getItem('mobrix_token'), user: null, company: null, page: 'dashboard', cache: {}, classic: { tab:'orcamento', items:[], pieces:[], client:'', markup:0 } };\ntry { state.classic = { ...state.classic, ...JSON.parse(localStorage.getItem('mobrix_classic') || '{}') }; } catch {}\nfunction saveClassic(){ try { localStorage.setItem('mobrix_classic', JSON.stringify(state.classic)); } catch {} }
+const state = { token: localStorage.getItem('mobrix_token'), user: null, company: null, page: 'dashboard', cache: {}, classic: { tab:'orcamento', items:[], pieces:[], client:'', markup:0 } };
+try { state.classic = { ...state.classic, ...JSON.parse(localStorage.getItem('mobrix_classic') || '{}') }; } catch {}
+function saveClassic(){ try { localStorage.setItem('mobrix_classic', JSON.stringify(state.classic)); } catch {} }
 const pageMeta = {
   dashboard:['PAINEL DE CONTROLE','Visão geral'],
   projects:['GESTÃO DE PROJETOS','Projetos e móveis'],
