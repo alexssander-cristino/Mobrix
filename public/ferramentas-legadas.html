@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ferramentas clássicas | MOBRIX</title>
+<title>Ferramentas clássicas | MADEVIX</title>
 <style>
 :root{--bg:#faf7f2;--sf:#fff;--tx:#2b2218;--mu:#7a6a58;--ac:#a85d24;--bd:#e6dccf;--ok:#2f7d4f;--rd:#b3412f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1713;--sf:#262019;--tx:#f1e9dd;--mu:#a8998a;--ac:#e0914f;--bd:#3a3128;--ok:#5cc08a;--rd:#e5786a;color-scheme:dark}}
@@ -30,10 +30,15 @@ table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px s
 .mu{color:var(--mu)}.ok{color:var(--ok)}.rd{color:var(--rd)}
 .lb{display:flex;flex-direction:column;flex:1 1 120px;font-size:13px;color:var(--mu)}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
 @media print{body *{visibility:hidden}#prev,#prev *{visibility:visible}#prev{position:absolute;left:0;top:0;width:100%;border:0}.np{display:none!important}}
+
+:root{--bg:#faf6f7;--tx:#282126;--mu:#80757b;--ac:#b51f3b;--bd:#eadde1;--rd:#b51f3b}
+.card,.c{border-radius:12px;box-shadow:0 6px 20px rgba(90,20,40,.045)}
+button{background:linear-gradient(110deg,#d52c4b,#a71930)}
+nav button.on{background:#a71930;border-color:#a71930}
 </style>
 </head>
 <body>
-<header><a href="/" style="color:inherit;text-decoration:none">MOBRIX</a> <span>Ferramentas clássicas</span></header><main style="max-width:980px;margin:12px auto;padding:0 16px"><div class="card"><b>Ferramentas preservadas</b><p class="mu">Este ambiente mantém as ferramentas originais de orçamento, precificação, prazo, plano de corte e visualização 3D. Os registros desta versão ainda ficam no armazenamento local do navegador; os novos módulos industriais usam PostgreSQL.</p><a href="/" style="color:var(--ac)">Voltar ao sistema industrial</a></div></main>
+<header><a href="/" style="color:inherit;text-decoration:none">MADEVIX</a> <span>Ferramentas clássicas</span></header><main style="max-width:980px;margin:12px auto;padding:0 16px"><div class="card"><b>Ferramentas preservadas</b><p class="mu">Este ambiente mantém as ferramentas originais de orçamento, precificação, prazo, plano de corte e visualização 3D. Os registros desta versão ainda ficam no armazenamento local do navegador; os novos módulos industriais usam PostgreSQL.</p><a href="/" style="color:var(--ac)">Voltar ao sistema industrial</a></div></main>
 <nav id="nav"></nav>
 <main id="m"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

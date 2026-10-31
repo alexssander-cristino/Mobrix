@@ -86,12 +86,12 @@ app.get('/api/health', asyncRoute(async (_req, res) => {
     return res.status(503).json({
       ok: false,
       database: 'connected',
-      service: 'mobrix-api',
+      service: 'madevix-api',
       missingTables,
-      error: 'Banco conectado, mas a estrutura do MOBRIX está incompleta. Execute npm run db:setup.'
+      error: 'Banco conectado, mas a estrutura do MADEVIX está incompleta. Execute npm run db:setup.'
     });
   }
-  res.json({ ok: true, database: 'connected', service: 'mobrix-api' });
+  res.json({ ok: true, database: 'connected', service: 'madevix-api' });
 }));
 
 app.post('/api/auth/register', asyncRoute(async (req, res) => {
@@ -202,7 +202,7 @@ app.post('/api/stock/movement', auth, asyncRoute(async (req, res) => {
 }));
 
 
-/* MOBRIX 2.0 — módulos industriais (migração 002). */
+/* MADEVIX 2.0 — módulos industriais (migração 002). */
 app.get('/api/engineering/parts', auth, asyncRoute(async (req, res) => {
   const result = await pool.query(`
     SELECT pp.*, p.title AS project_title, m.name AS material_name
@@ -308,7 +308,7 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 
 
 app.use((err, _req, res, _next) => {
-  console.error('[MOBRIX API]', err);
+  console.error('[MADEVIX API]', err);
   const knownErrors = {
     '23503': [400, 'A operação referencia um registro inexistente ou pertencente a outra empresa.'],
     '23505': [409, 'Já existe um registro com esses dados.'],
@@ -325,4 +325,4 @@ app.use((err, _req, res, _next) => {
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const port = Number(process.env.PORT || 3000);
-app.listen(port, () => console.log(`MOBRIX API running on port ${port}`));
+app.listen(port, () => console.log(`MADEVIX API running on port ${port}`));

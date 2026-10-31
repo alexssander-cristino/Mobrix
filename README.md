@@ -1,4 +1,4 @@
-# MOBRIX
+# MADEVIX
 
 ERP industrial para marcenarias. Gestão de projetos, produção, clientes, materiais e financeiro em um único ambiente.
 
@@ -31,7 +31,7 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 ## Executar localmente
 
 1. Instale Node.js 20+ e PostgreSQL.
-2. Crie um banco chamado `mobrix`.
+2. Crie um banco chamado `madevix`.
 3. Copie `.env.example` para `.env` e configure `DATABASE_URL` e `JWT_SECRET`.
 4. Execute `db/schema.sql` somente na criação de um banco novo. Em banco existente, faça backup e preserve os dados.
 5. Execute `npm run db:migrate` para aplicar as migrações incrementais pendentes.
