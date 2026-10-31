@@ -100,3 +100,92 @@
 .model-cut-table td,.model-cut-table th{padding:10px 12px}.model-build-note{line-height:1.55;margin:12px 0 0}
 @media(max-width:760px){.model-build-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.model-build-head{align-items:flex-start}.model-build-actions{width:100%}.model-build-actions .btn{flex:1}}
 @media print{body *{visibility:hidden!important}#model-build-details,#model-build-details *{visibility:visible!important}#model-build-details{position:absolute;inset:0;border:0}.model-build-actions{display:none!important}}
+
+
+/* MADEVIX — identidade visual vermelha e linguagem visual de produto */
+:root{
+  --ink:#242126;
+  --muted:#817b80;
+  --line:#eee5e7;
+  --surface:#fffdfd;
+  --purple:#b51f3b;
+  --purple-soft:#fff0f2;
+  --navy:#21191d;
+  --green:#26734d;
+  --red:#c32643;
+  --shadow:0 12px 34px rgba(65,18,31,.065);
+  color-scheme:light;
+}
+body{background:#faf7f8;color:var(--ink)}
+.auth-screen{
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 12% 12%,rgba(190,31,62,.14),transparent 34%),
+    radial-gradient(ellipse at 92% 88%,rgba(112,24,43,.10),transparent 32%),
+    linear-gradient(135deg,#fffafa 0%,#f8f3f4 55%,#fff 100%);
+}
+.auth-screen:before,.auth-screen:after{
+  content:"";position:absolute;pointer-events:none;border:1px solid rgba(181,31,59,.10);
+  width:430px;height:430px;border-radius:50%;right:-190px;top:-190px;
+  box-shadow:0 0 0 35px rgba(181,31,59,.025),0 0 0 75px rgba(181,31,59,.018);
+  animation:madevix-orbit 24s linear infinite;
+}
+.auth-screen:after{width:260px;height:260px;right:auto;left:-150px;top:auto;bottom:-150px;animation-direction:reverse}
+@keyframes madevix-orbit{to{transform:rotate(360deg)}}
+.auth-brand,.sidebar-brand{letter-spacing:1.4px}
+.auth-brand{z-index:1}
+.brand-mark{
+  background:linear-gradient(145deg,#e13a57 0%,#a71930 72%);
+  border-radius:11px;box-shadow:0 9px 22px rgba(167,25,48,.25);
+  position:relative;overflow:hidden;
+}
+.brand-mark:after{content:"";position:absolute;inset:-60% auto -60% -35%;width:35%;background:#ffffff55;transform:rotate(25deg);animation:madevix-shine 5.5s ease-in-out infinite}
+@keyframes madevix-shine{0%,65%,100%{left:-45%}85%{left:130%}}
+.auth-card{
+  position:relative;z-index:1;border:1px solid #fff;border-radius:20px;
+  box-shadow:0 28px 90px rgba(76,18,34,.12),0 2px 8px rgba(76,18,34,.04);
+  background:rgba(255,255,255,.88);backdrop-filter:blur(18px);
+  animation:madevix-enter .7s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes madevix-enter{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.auth-card h1 span{background:linear-gradient(100deg,#e13a57,#9f1731);background-clip:text;-webkit-background-clip:text;color:transparent}
+.eyebrow{color:#a71930}
+.form-stack input:focus,.field input:focus,.field select:focus,.field textarea:focus,.search-input:focus{
+  border-color:#d45b70;box-shadow:0 0 0 4px rgba(181,31,59,.10)
+}
+.btn-primary{background:linear-gradient(115deg,#d52c4b,#a71930);box-shadow:0 8px 20px rgba(181,31,59,.2);transition:transform .22s ease,box-shadow .22s ease,filter .22s ease}
+.btn-primary:hover{background:linear-gradient(115deg,#e13a57,#95152d);transform:translateY(-2px);box-shadow:0 12px 25px rgba(181,31,59,.25)}
+.btn-secondary{background:#fff0f2;color:#a71930}
+.auth-switch button,.text-link{color:#b51f3b}
+.sidebar{background:linear-gradient(180deg,#281b20 0%,#1d171a 100%);box-shadow:8px 0 32px rgba(49,13,24,.08)}
+.sidebar-brand .brand-mark{background:linear-gradient(145deg,#e13a57,#a71930)}
+.nav-item{transition:background .2s ease,color .2s ease,transform .2s ease}
+.nav-item:hover{transform:translateX(2px)}
+.nav-item.active{background:linear-gradient(100deg,rgba(205,39,69,.28),rgba(205,39,69,.10));box-shadow:inset 2px 0 #e13a57}
+.nav-item.active span{color:#ff8798}
+.company-chip{background:rgba(255,255,255,.045)}
+.status-dot{background:#e34b66;box-shadow:0 0 0 4px rgba(227,75,102,.12)}
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(16px)}
+.stat-card,.panel,.table-panel,.settings-card{
+  transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease;
+}
+.stat-card:hover,.panel:hover,.settings-card:hover{
+  transform:translateY(-2px);border-color:#ead0d5;box-shadow:0 16px 38px rgba(85,20,38,.075)
+}
+.stat-icon{background:#fff0f2;color:#b51f3b}
+.pill{background:#fff0f2;color:#a71930}
+.pill.red{background:#ffe8ec;color:#ad1d38}
+.classic-tab.active{background:#a71930;border-color:#a71930}
+.classic-cut-metrics strong{background:#fff0f2}
+.cut-piece{fill:#f5c8d0;stroke:#b51f3b}
+.classic-grand strong{color:#b51f3b}
+.toast.error{background:#a71930}
+.modal{border:1px solid #f1e2e5;box-shadow:0 28px 90px rgba(49,13,24,.22)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(181,31,59,.25);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media(max-width:760px){
+  .sidebar.open{box-shadow:20px 0 60px rgba(49,13,24,.32)}
+  .mobile-menu{background:#fff0f2;color:#a71930}
+}
