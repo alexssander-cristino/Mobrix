@@ -148,7 +148,7 @@ app.get('/api/dashboard', auth, asyncRoute(async (req, res) => {
 
 const resources = {
   customers: { table: 'customers', fields: ['name','phone','email','document','address','notes'], required: ['name'], order: 'created_at DESC' },
-  materials: { table: 'materials', fields: ['name','category','unit','quantity','minimum_quantity','unit_cost','supplier','sheet_length_mm','sheet_width_mm'], required: ['name'], order: 'name ASC' },
+  materials: { table: 'materials', fields: ['name','category','unit','quantity','minimum_quantity','unit_cost','supplier','sheet_length_mm','sheet_width_mm','sheet_thickness_mm'], required: ['name'], order: 'name ASC' },
   projects: { table: 'projects', fields: ['customer_id','title','description','status','estimated_cost','sale_price','deadline'], required: ['title'], order: 'created_at DESC' },
   orders: { table: 'production_orders', fields: ['project_id','stage','priority','due_date','notes'], required: ['project_id'], order: 'created_at DESC' },
   finance: { table: 'finance_transactions', fields: ['project_id','description','transaction_type','amount','due_date','paid_at'], required: ['description','transaction_type','amount'], order: 'created_at DESC' }
@@ -253,7 +253,7 @@ app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
   const m=map.get(id);if(!m)continue;
   const sources=offcuts.rows.filter(o=>o.material_id===id&&Math.abs(+o.thickness_mm-pieces[0].t)<.01).map(o=>({kind:'retalho',label:o.label,free:[{w:+o.length_mm,h:+o.width_mm}]}));
   const sl=+m.sheet_length_mm||0,sw=+m.sheet_width_mm||0;
-  if(sl&&sw&&String(m.unit).toLowerCase().includes('chap'))for(let i=0;i<Math.floor(+m.quantity||0);i++)sources.push({kind:'chapa',label:m.name+' · chapa '+(i+1),free:[{w:sl,h:sw}]});
+  if(sl&&sw&&Math.abs((+m.sheet_thickness_mm||0)-pieces[0].t)<0.01&&String(m.unit).toLowerCase().includes('chap'))for(let i=0;i<Math.floor(+m.quantity||0);i++)sources.push({kind:'chapa',label:m.name+' · chapa '+(i+1),free:[{w:sl,h:sw}]});
   const used=[],missing=[];
   for(const p of pieces){let best=null;for(const s of sources)for(let i=0;i<s.free.length;i++){const f=s.free[i],normal=p.l<=f.w&&p.w<=f.h,rot=p.grain==='livre'&&p.w<=f.w&&p.l<=f.h;if(normal||rot){const waste=f.w*f.h-p.l*p.w;if(!best||waste<best.waste)best={s,i,f,rot,waste}}}
    if(!best){missing.push(p);continue}
@@ -261,10 +261,10 @@ app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
   }
   const sourceNames=[...new Set(used.map(x=>x.source))],usedOffcuts=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='retalho')).length,usedSheets=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='chapa')).length;
   const area=missing.reduce((n,p)=>n+p.l*p.w,0),sheetArea=sl*sw,sheets=sheetArea?Math.ceil(area/sheetArea):0;
-  output.push({material_id:id,material:m.name,required:pieces.length,allocated:used.length,missing:missing.length,usedOffcuts,usedSheets,purchaseSheets:sheets,estimatedPurchase:sheets*(+m.unit_cost||0),sheetConfigured:!!sheetArea,sheet:sheetArea?sl+' × '+sw+' mm':'Dimensões não configuradas',assigned:used,unallocated:missing.map(p=>({name:p.name,dimensions:p.l+' × '+p.w+' mm'}))});
+  output.push({material_id:id,material:m.name,required:pieces.length,allocated:used.length,missing:missing.length,usedOffcuts,usedSheets,purchaseSheets:sheetArea?sheets:null,estimatedPurchase:sheetArea?sheets*(+m.unit_cost||0):null,sheetConfigured:!!sheetArea,sheet:sheetArea?sl+' × '+sw+' mm':'Dimensões não configuradas',assigned:used,unallocated:missing.map(p=>({name:p.name,dimensions:p.l+' × '+p.w+' mm'}))});
  }
  const unlinked=parts.rows.filter(p=>!p.material_id).map(p=>p.name);
- res.json({project:project.rows[0],materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+x.purchaseSheets,0),estimatedPurchase:output.reduce((n,x)=>n+x.estimatedPurchase,0)}});
+ res.json({project:project.rows[0],materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+(x.purchaseSheets||0),0),estimatedPurchase:output.reduce((n,x)=>n+(x.estimatedPurchase||0),0)}});
 }));
 
 app.get('/api/offcuts', auth, asyncRoute(async(req,res)=>{
