@@ -96,8 +96,10 @@ app.get('/api/health', asyncRoute(async (_req, res) => {
 
 app.post('/api/auth/register', asyncRoute(async (req, res) => {
   const { company, name, email, password } = req.body || {};
-  if (!company?.trim() || !name?.trim() || !email?.trim() || !password || password.length < 8)
-    return res.status(400).json({ error: 'Informe empresa, nome, e-mail e senha com pelo menos 8 caracteres.' });
+  if ([company, name, email].some(value => typeof value !== 'string' || !value.trim()) ||
+      typeof password !== 'string' || password.length < 8 || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+    return res.status(400).json({ error: 'Informe empresa, nome, e-mail válido e senha com pelo menos 8 caracteres.' });
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -115,7 +117,8 @@ app.post('/api/auth/register', asyncRoute(async (req, res) => {
 
 app.post('/api/auth/login', asyncRoute(async (req, res) => {
   const { email, password } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'Informe e-mail e senha.' });
+  if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || !password)
+    return res.status(400).json({ error: 'Informe e-mail e senha válidos.' });
   const result = await pool.query('SELECT id,company_id,name,email,password_hash,role FROM users WHERE email=LOWER($1) AND active=TRUE ORDER BY created_at', [email.trim()]);
   let user = null;
   for (const candidate of result.rows) {
@@ -314,8 +317,9 @@ app.use((err, _req, res, _next) => {
     '22007': [400, 'Uma data informada é inválida.']
   };
   const mapped = knownErrors[err.code];
-  const status = mapped?.[0] || 500;
-  const message = mapped?.[1] || (process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message);
+  const malformedJson = err instanceof SyntaxError && err.status === 400 && 'body' in err;
+  const status = malformedJson ? 400 : (mapped?.[0] || 500);
+  const message = malformedJson ? 'O corpo da requisição contém JSON inválido.' : (mapped?.[1] || (process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message));
   res.status(status).json({ error: message, ...(process.env.NODE_ENV !== 'production' && err.code ? { code: err.code } : {}) });
 });
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
