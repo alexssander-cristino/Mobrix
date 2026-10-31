@@ -167,6 +167,12 @@ async function updateClassicModel(){
  const model=$('#classic-model');if(!model)return;
  const cfg={width:+$('#model-width')?.value||1200,height:+$('#model-height')?.value||2100,depth:+$('#model-depth')?.value||550,shelves:+$('#model-shelves')?.value||0,doors:+$('#model-doors')?.value||0,drawers:+$('#model-drawers')?.value||0,finish:$('#model-finish')?.value||'#e8e4dc'};
  model.dataset.shelves=cfg.shelves;model.dataset.doors=cfg.doors;model.dataset.drawers=cfg.drawers;
+ if(projectImport?.kind==='drawing'){
+  if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}
+  if(!model.querySelector('canvas'))model.innerHTML='<div class="furniture-viewer-hint">Reconstruindo o contorno do desenho em 3D...</div>';
+  try{projectImportModulePromise ||= import('./project-import.js');const mod=await projectImportModulePromise;if(!model.isConnected)return;if(!importedModelViewer){importedModelViewer=await mod.mountDrawingModel(model,projectImport,{width:+$('#model-width').value||cfg.width,height:+$('#model-height').value||cfg.height,depth:+$('#model-depth').value||cfg.depth});const source=importedModelViewer.sourceSizeMm;if(source){$('#model-width').value=Math.round(source.x);$('#model-height').value=Math.round(source.y);$('#model-depth').value=Math.round(source.z)}}importedModelViewer.resize({width:+$('#model-width').value||cfg.width,height:+$('#model-height').value||cfg.height,depth:+$('#model-depth').value||cfg.depth})}catch(err){model.innerHTML='<div class="empty-state">Não foi possível reconstruir o desenho em 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX DRAWING 3D]',err)}
+  return;
+ }
  if(projectImport?.kind==='model'){
   if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}
   if(!model.querySelector('canvas'))model.innerHTML='<div class="furniture-viewer-hint">Modelo 3D importado · arraste para orbitar</div>';
@@ -185,9 +191,10 @@ async function importClassicProject(file){
   const mod=await projectImportModulePromise,details=await mod.inspectProjectFile(file);
   if(projectImport?.url)URL.revokeObjectURL(projectImport.url);
   projectImport={...details,file};
-  $('.model-structure-fields')?.classList.toggle('hidden',details.kind==='model');
+  $('.model-structure-fields')?.classList.toggle('hidden',details.kind!=='none');
+  
   $('.model-dimensions')?.classList.toggle('hidden',false);
-  $('#classic-model-help').textContent=details.kind==='model'?'Modelo original preservado. Altere somente largura, altura e profundidade; portas, gavetas, divisões e detalhes acompanham o redimensionamento.':'Desenho 2D usado como referência. A prévia é preservada, mas a conversão automática não consegue deduzir toda a geometria 3D; confira o modelo e as medidas antes de fabricar.';
+  $('#classic-model-help').textContent=details.kind==='model'?'Modelo original preservado. Altere somente largura, altura e profundidade; portas, gavetas, divisões e detalhes acompanham o redimensionamento.':'O contorno da vista enviada é convertido em um volume 3D e a imagem original fica aplicada na face frontal. Ajuste largura, altura e profundidade. Vistas laterais, encaixes internos e peças ocultas não podem ser deduzidos de uma única imagem.';
   if(details.dimensions){$('#model-width').value=details.dimensions.width;$('#model-height').value=details.dimensions.height}
   const preview=$('#project-source-preview');
   if(preview){preview.classList.remove('hidden');preview.innerHTML=details.kind==='drawing'?'<div class="project-source-image"><img src="'+details.previewUrl+'" alt="Prévia do projeto enviado"></div><div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>'+(details.pages?details.pages+' página(s) · ':'')+(details.entities?details.entities+' entidades · ':'')+Math.max(1,Math.round(details.size/1024))+' KB</small></div>':'<div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>Dimensões 3D: carregando...</small></div>'}
