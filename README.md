@@ -33,7 +33,8 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 1. Instale Node.js 20+ e PostgreSQL.
 2. Crie um banco chamado `mobrix`.
 3. Copie `.env.example` para `.env` e configure `DATABASE_URL` e `JWT_SECRET`.
-4. Execute `db/schema.sql` no banco.
+4. Execute `db/schema.sql` somente na criação de um banco novo. Em banco existente, faça backup e preserve os dados.
+5. Execute `npm run db:migrate` para aplicar as migrações incrementais pendentes.
 6. Instale dependências e inicie:
 
 ```bash
@@ -67,13 +68,10 @@ Rotas de dados exigem `Authorization: Bearer <token>`.
 
 ## Deploy
 
-Configure no provedor: Start `npm start`, `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `CORS_ORIGIN`. Execute `db/schema.sql` no banco antes de abrir a aplicação.
+Configure no provedor: Start `npm start`, `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `CORS_ORIGIN`. Em banco novo, aplique `db/schema.sql` uma vez; em seguida execute `npm run db:migrate`.
 
 ## Próximas etapas
 
-- Plano de corte otimizado e reaproveitamento de retalhos
-- Ficha técnica por móvel e lista de peças
-- Apontamento de tempo e produtividade por etapa
 - Cálculo de custo real e margem por projeto
 - Agenda de montagem, entrega e instalação
 - Relatórios e exportação
