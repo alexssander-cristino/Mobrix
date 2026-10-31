@@ -39,53 +39,90 @@
   <div id="app" class="app-shell hidden">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-mark">M</div>
-        <div class="brand-copy"><strong>MADEVIX</strong><small>GESTÃO INDUSTRIAL</small></div>
-        <button class="sidebar-collapse" id="sidebar-collapse" type="button" aria-label="Recolher sidebar" title="Recolher sidebar">
+        <a class="sidebar-brand-link" href="#" aria-label="MADEVIX — início" data-page="dashboard">
+          <span class="brand-mark">M</span>
+          <span class="brand-copy"><strong>MADEVIX</strong><small>GESTÃO PARA MARCENARIAS</small></span>
+        </a>
+        <button class="sidebar-collapse" id="sidebar-collapse" type="button" aria-label="Recolher menu" title="Recolher menu">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
         </button>
       </div>
-      <div class="company-chip"><span class="status-dot"></span><span id="company-name">Minha empresa</span></div>
+
+      <div class="company-chip" title="Empresa atual">
+        <span class="company-avatar" aria-hidden="true">E</span>
+        <span class="company-copy"><small>AMBIENTE ATIVO</small><strong id="company-name">Minha empresa</strong></span>
+        <span class="company-status" aria-label="Ativo"></span>
+      </div>
+
+      <div class="nav-caption">MENU PRINCIPAL</div>
       <nav class="nav" aria-label="Navegação principal">
         <div class="nav-group">
-          <p class="nav-label">VISÃO GERAL</p>
-          <button class="nav-item active" data-page="dashboard" title="Dashboard"><span class="nav-icon" data-icon="dashboard"></span><span class="nav-text">Dashboard</span></button>
+          <p class="nav-label">INÍCIO</p>
+          <button class="nav-item active" type="button" data-page="dashboard" title="Visão geral">
+            <span class="nav-icon" data-icon="dashboard"></span><span class="nav-text">Visão geral</span>
+          </button>
         </div>
         <div class="nav-group">
           <p class="nav-label">COMERCIAL</p>
-          <button class="nav-item" data-page="customers" title="Clientes"><span class="nav-icon" data-icon="users"></span><span class="nav-text">Clientes</span></button>
-          <button class="nav-item" data-page="projects" title="Projetos e orçamentos"><span class="nav-icon" data-icon="folder"></span><span class="nav-text">Projetos e orçamentos</span></button>
+          <button class="nav-item" type="button" data-page="customers" title="Clientes">
+            <span class="nav-icon" data-icon="users"></span><span class="nav-text">Clientes</span>
+          </button>
+          <button class="nav-item" type="button" data-page="projects" title="Projetos e orçamentos">
+            <span class="nav-icon" data-icon="folder"></span><span class="nav-text">Projetos e orçamentos</span>
+          </button>
         </div>
         <div class="nav-group">
           <p class="nav-label">ENGENHARIA</p>
-          <button class="nav-item" data-page="engineering" title="Engenharia e peças"><span class="nav-icon" data-icon="ruler"></span><span class="nav-text">Engenharia e peças</span></button>
-          <button class="nav-item" data-page="classic" title="Ferramentas de marcenaria"><span class="nav-icon" data-icon="box"></span><span class="nav-text">Ferramentas de marcenaria</span></button>
+          <button class="nav-item" type="button" data-page="engineering" title="Engenharia e peças">
+            <span class="nav-icon" data-icon="ruler"></span><span class="nav-text">Engenharia e peças</span>
+          </button>
+          <button class="nav-item" type="button" data-page="classic" title="Ferramentas de marcenaria">
+            <span class="nav-icon" data-icon="box"></span><span class="nav-text">Ferramentas de marcenaria</span>
+          </button>
         </div>
         <div class="nav-group">
-          <p class="nav-label">COMPRAS E ESTOQUE</p>
-          <button class="nav-item" data-page="purchasing" title="Compra inteligente"><span class="nav-icon" data-icon="shopping-cart"></span><span class="nav-text">Compra inteligente</span></button>
-          <button class="nav-item" data-page="purchases" title="Pedidos de compra"><span class="nav-icon" data-icon="clipboard-list"></span><span class="nav-text">Pedidos de compra</span></button>
-          <button class="nav-item" data-page="materials" title="Estoque e materiais"><span class="nav-icon" data-icon="package"></span><span class="nav-text">Estoque e materiais</span></button>
-          <button class="nav-item" data-page="offcuts" title="Retalhos"><span class="nav-icon" data-icon="layers"></span><span class="nav-text">Retalhos</span></button>
+          <p class="nav-label">SUPRIMENTOS</p>
+          <button class="nav-item" type="button" data-page="purchasing" title="Compra inteligente">
+            <span class="nav-icon" data-icon="package"></span><span class="nav-text">Compra inteligente</span>
+          </button>
+          <button class="nav-item" type="button" data-page="purchases" title="Pedidos de compra">
+            <span class="nav-icon" data-icon="file"></span><span class="nav-text">Pedidos de compra</span>
+          </button>
+          <button class="nav-item" type="button" data-page="materials" title="Estoque e materiais">
+            <span class="nav-icon" data-icon="layers"></span><span class="nav-text">Estoque e materiais</span>
+          </button>
+          <button class="nav-item" type="button" data-page="offcuts" title="Retalhos">
+            <span class="nav-icon" data-icon="box"></span><span class="nav-text">Retalhos</span>
+          </button>
         </div>
         <div class="nav-group">
           <p class="nav-label">PRODUÇÃO</p>
-          <button class="nav-item" data-page="orders" title="Ordens de produção"><span class="nav-icon" data-icon="factory"></span><span class="nav-text">Ordens de produção</span></button>
-          <button class="nav-item" data-page="productivity" title="Produtividade"><span class="nav-icon" data-icon="clock"></span><span class="nav-text">Produtividade</span></button>
+          <button class="nav-item" type="button" data-page="orders" title="Ordens de produção">
+            <span class="nav-icon" data-icon="factory"></span><span class="nav-text">Ordens de produção</span>
+          </button>
+          <button class="nav-item" type="button" data-page="productivity" title="Produtividade">
+            <span class="nav-icon" data-icon="clock"></span><span class="nav-text">Produtividade</span>
+          </button>
         </div>
         <div class="nav-group">
-          <p class="nav-label">FINANCEIRO</p>
-          <button class="nav-item" data-page="finance" title="Financeiro"><span class="nav-icon" data-icon="wallet"></span><span class="nav-text">Financeiro</span></button>
+          <p class="nav-label">GESTÃO</p>
+          <button class="nav-item" type="button" data-page="finance" title="Financeiro">
+            <span class="nav-icon" data-icon="wallet"></span><span class="nav-text">Financeiro</span>
+          </button>
         </div>
-        <div class="nav-group">
-          <p class="nav-label">CONFIGURAÇÕES</p>
-          <button class="nav-item" data-page="settings" title="Configurações"><span class="nav-icon" data-icon="settings"></span><span class="nav-text">Configurações</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="sidebar-settings-link" type="button" data-page="settings">
+          <span class="nav-icon" data-icon="settings"></span><span class="nav-text">Configurações</span>
+        </button>
+        <div class="sidebar-user">
+          <div class="user-avatar" id="user-avatar">M</div>
+          <div class="user-meta"><strong id="user-name">Usuário</strong><small id="user-role">Administrador</small></div>
+          <button class="icon-button" id="logout" type="button" title="Sair" aria-label="Sair">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg>
+          </button>
         </div>
-      </nav></nav>
-      <div class="sidebar-bottom">
-        <div class="user-avatar" id="user-avatar">M</div>
-        <div class="user-meta"><strong id="user-name">Usuário</strong><small id="user-role">Administrador</small></div>
-        <button class="icon-button" id="logout" title="Sair" aria-label="Sair"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3m9-9h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/></svg></button>
       </div>
     </aside>
     <main class="main">
