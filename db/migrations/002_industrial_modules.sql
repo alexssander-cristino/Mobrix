@@ -114,9 +114,18 @@ DROP TRIGGER IF EXISTS trg_offcuts_material_company ON offcuts;
 CREATE TRIGGER trg_offcuts_material_company BEFORE INSERT OR UPDATE OF company_id, material_id ON offcuts
 FOR EACH ROW EXECUTE FUNCTION mobrix_assert_material_company();
 
+CREATE OR REPLACE FUNCTION mobrix_assert_offcut_project_company() RETURNS trigger AS $
+BEGIN
+  IF NEW.source_project_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projects WHERE id=NEW.source_project_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Projeto de origem não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
 DROP TRIGGER IF EXISTS trg_offcuts_project_company ON offcuts;
 CREATE TRIGGER trg_offcuts_project_company BEFORE INSERT OR UPDATE OF company_id, source_project_id ON offcuts
-FOR EACH ROW WHEN (NEW.source_project_id IS NOT NULL) EXECUTE FUNCTION mobrix_assert_project_company();
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_offcut_project_company();
 
 CREATE OR REPLACE FUNCTION mobrix_assert_order_project_company() RETURNS trigger AS $$
 BEGIN
@@ -143,3 +152,42 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trg_time_order_company ON time_entries;
 CREATE TRIGGER trg_time_order_company BEFORE INSERT OR UPDATE OF company_id, order_id ON time_entries
 FOR EACH ROW EXECUTE FUNCTION mobrix_assert_time_order_company();
+
+CREATE OR REPLACE FUNCTION mobrix_assert_customer_company() RETURNS trigger AS $$
+BEGIN
+  IF NEW.customer_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM customers WHERE id=NEW.customer_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Cliente não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_project_customer_company ON projects;
+CREATE TRIGGER trg_project_customer_company BEFORE INSERT OR UPDATE OF company_id, customer_id ON projects
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_customer_company();
+
+CREATE OR REPLACE FUNCTION mobrix_assert_finance_project_company() RETURNS trigger AS $$
+BEGIN
+  IF NEW.project_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projects WHERE id=NEW.project_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Projeto financeiro não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_finance_project_company ON finance_transactions;
+CREATE TRIGGER trg_finance_project_company BEFORE INSERT OR UPDATE OF company_id, project_id ON finance_transactions
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_finance_project_company();
+
+CREATE OR REPLACE FUNCTION mobrix_assert_stock_material_company() RETURNS trigger AS $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM materials WHERE id=NEW.material_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Material da movimentação não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_stock_material_company ON stock_movements;
+CREATE TRIGGER trg_stock_material_company BEFORE INSERT OR UPDATE OF company_id, material_id ON stock_movements
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_stock_material_company();
