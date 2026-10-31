@@ -17,7 +17,21 @@ function parseDxf(text){
 export async function inspectProjectFile(file){
  const ext=(file.name.split('.').pop()||'').toLowerCase(),url=URL.createObjectURL(file),base={name:file.name,size:file.size,ext,url};
  if(['png','jpg','jpeg','webp','gif','bmp'].includes(ext)){const meta=await readImageMeta(url);return{...base,kind:'drawing',previewUrl:url,aspectRatio:meta.width/meta.height,dimensions:{width:1200,height:Math.max(1,Math.round(1200*meta.height/meta.width)),depth:550},notes:'Imagem analisada para extrair o contorno frontal e gerar um volume 3D. A profundidade é ajustável; confira o resultado com o projeto técnico.'};}
- if(ext==='pdf'){const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.worker.min.mjs';const doc=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise,page=await doc.getPage(1),viewport=page.getViewport({scale:1.35}),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:ctx,viewport}).promise;let text='';for(let p=1;p<=Math.min(doc.numPages,8);p++){const pg=await doc.getPage(p),content=await pg.getTextContent();text+=' '+content.items.map(x=>x.str).join(' ')}const match=text.match(/(\d{3,4})\s*(?:mm)?\s*[xX×]\s*(\d{3,4})\s*(?:mm)?/);const previewUrl=canvas.toDataURL('image/png'),ratio=viewport.width/viewport.height;return{...base,kind:'drawing',previewUrl,pages:doc.numPages,aspectRatio:ratio,dimensions:match?{width:Number(match[1]),height:Number(match[2]),depth:550}:{width:1200,height:Math.max(1,Math.round(1200/ratio)),depth:550},notes:'PDF lido ('+doc.numPages+' página(s)). O contorno da primeira página será usado para gerar o volume 3D; as cotas encontradas são uma sugestão e devem ser conferidas.'}}
+ if(ext==='pdf'){
+  const pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.min.mjs');pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@'+PDFJS_VERSION+'/build/pdf.worker.min.mjs';
+  const doc=await pdfjs.getDocument({data:await file.arrayBuffer()}).promise,page=await doc.getPage(1),viewport=page.getViewport({scale:1.35}),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);await page.render({canvasContext:ctx,viewport}).promise;
+  let text='';for(let p=1;p<=Math.min(doc.numPages,8);p++){const pg=await doc.getPage(p),content=await pg.getTextContent();text+=' '+content.items.map(x=>x.str).join(' ')}
+  const normalized=text.replace(/\\s+/g,' ').trim(),measure=normalized.match(/(\\d{3,5})\\s*(?:mm)?\\s*[xX×]\\s*(\\d{3,5})\\s*(?:mm)?\\s*[xX×]\\s*(\\d{3,5})\\s*mm/i),two=normalized.match(/(\\d{3,5})\\s*(?:mm)?\\s*[xX×]\\s*(\\d{3,5})\\s*mm/i);
+  const title=(normalized.match(/(?:Rack|Painel|Arm[aá]rio|Balc[aã]o|Gabinete)[^.;]{0,60}/i)||[])[0]||file.name.replace(/\\.pdf$/i,'');
+  const isTvRack=/rack.{0,20}(?:tv|televis[aã]o)|(?:tv|televis[aã]o).{0,20}rack/i.test(normalized)||/rack.{0,15}tv/i.test(file.name);
+  const thickness=Number((normalized.match(/(?:MDF|MDP)\\s*(\\d{1,2})\\s*mm/i)||[])[1])||18;
+  const finish=(normalized.match(/(?:acabamento\\s*)?([A-ZÀ-Ú][a-zà-ú]+)\\s*(?:2 de abrir|\\d+ de abrir|1 prateleira|\\d+ prateleiras)/i)||[])[1]||((normalized.match(/\\b(Carvalho|Nogueira|Freij[oó]|Am[eé]ndoa|Branco|Preto|Cinza)\\b/i)||[])[1]||'Carvalho');
+  const doors=Number((normalized.match(/(\\d+)\\s*(?:portas?|de abrir)/i)||[])[1])||(/duas portas|2 de abrir/i.test(normalized)?2:0);
+  const shelves=Number((normalized.match(/(\\d+)\\s*prateleiras?/i)||[])[1])||(/uma prateleira/i.test(normalized)?1:0);
+  const specification=isTvRack&&measure?{type:'tv-rack',title,dimensions:{width:Number(measure[1]),height:Number(measure[2]),depth:Number(measure[3])},thickness,finish,doors:doors||2,centralOpen:/v[aã]o central aberto/i.test(normalized),shelves:shelves||1}:null;
+  const dimensions=measure?{width:Number(measure[1]),height:Number(measure[2]),depth:Number(measure[3])}:two?{width:Number(two[1]),height:Number(two[2]),depth:550}:{width:1200,height:Math.round(1200/(viewport.width/viewport.height)),depth:550};
+  return{...base,kind:specification?'specified':'drawing',previewUrl:canvas.toDataURL('image/png'),pages:doc.numPages,dimensions,specification,extractedText:normalized,notes:specification?'Projeto identificado: '+title+'. '+dimensions.width+' × '+dimensions.height+' × '+dimensions.depth+' mm; MDF '+thickness+' mm; '+specification.finish+'; '+specification.doors+' portas; '+specification.shelves+' prateleira(s). O modelo 3D será montado com essas peças e divisões.':'PDF lido ('+doc.numPages+' página(s)). Não encontrei especificações suficientes para montar o móvel por componentes; confira a vista e as medidas.'}
+ }
  if(ext==='svg'){const raw=await file.text(),doc=new DOMParser().parseFromString(raw,'image/svg+xml'),el=doc.documentElement,view=(el.getAttribute('viewBox')||'').trim().split(/[ ,]+/).map(Number),w=Number(el.getAttribute('width'))||view[2]||1200,h=Number(el.getAttribute('height'))||view[3]||2100;if(doc.querySelector('parsererror'))throw Error('O arquivo SVG está inválido.');return{...base,kind:'drawing',previewUrl:url,dimensions:{width:Math.round(w),height:Math.round(h),depth:550},notes:'SVG vetorial carregado. O contorno será convertido em volume 3D; confirme a escala em milímetros.'}}
  if(ext==='dxf'){const parsed=parseDxf(await file.text());return{...base,kind:'drawing',...parsed,dimensions:{width:parsed.width,height:parsed.height,depth:550}}}
  if(['glb','gltf','obj','stl'].includes(ext))return{...base,kind:'model',notes:'Modelo 3D carregado. Arraste para orbitar e use a roda para aproximar.'};
@@ -78,4 +92,50 @@ export async function mountDrawingModel(host,details,dimensions={}){
  const applySize=d=>{current={width:Number(d.width)||current.width,height:Number(d.height)||current.height,depth:Number(d.depth)||current.depth};body.scale.set(current.width/sourceWidth,current.height/sourceHeight,current.depth/sourceDepth);fit();return{...current}};fit();
  let raf=0,dead=false;const onResize=()=>{if(dead)return;const cw=host.clientWidth||700,ch=host.clientHeight||460;renderer.setSize(cw,ch,false);camera.aspect=cw/ch;camera.updateProjectionMatrix()};const observer=new ResizeObserver(onResize);observer.observe(host);const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
  return{resize:applySize,reset:fit,sourceSizeMm:{x:sourceWidth,y:sourceHeight,z:sourceDepth},destroy(){dead=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();texture.dispose();geometry.dispose();body.material.dispose();front.geometry.dispose();front.material.dispose();renderer.domElement.remove()}};
+}
+
+export async function mountSpecifiedFurniture(host,details,dimensions={}){
+ const THREE=await import('https://cdn.jsdelivr.net/npm/three@'+THREE_VERSION+'/build/three.module.js');
+ const [{OrbitControls}]=await Promise.all([import('https://cdn.jsdelivr.net/npm/three@'+THREE_VERSION+'/examples/jsm/controls/OrbitControls.js')]);
+ const spec=details.specification||{},source={width:Number(spec.dimensions?.width)||1800,height:Number(spec.dimensions?.height)||400,depth:Number(spec.dimensions?.depth)||500},thickness=Number(spec.thickness)||18;
+ const finish=String(spec.finish||'Carvalho').toLowerCase(),woodColor=/branco/.test(finish)?0xe7e3dc:/nogueira/.test(finish)?0x79563e:/preto|grafite/.test(finish)?0x44484b:0xc99b68;
+ const group=new THREE.Group(),wood=new THREE.MeshStandardMaterial({color:woodColor,roughness:.78}),inner=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xd8d3ca:0x8a694a,roughness:.85}),backMat=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xe0ddd5:0x987451,roughness:.9}),metal=new THREE.MeshStandardMaterial({color:0xbfc3c4,metalness:.78,roughness:.28});
+ const addBox=(x,y,z,w,h,d,mat=wood)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);group.add(mesh);return mesh};
+ const W=source.width,H=source.height,D=source.depth,t=thickness,bottom=-H/2,top=H/2,front=D/2,back=-D/2;
+ // Carcaça externa: tampo, base, laterais e fundo.
+ addBox(0,top-t/2,0,W,t,D);
+ addBox(0,bottom+t/2,0,W,t,D);
+ addBox(-W/2+t/2,0,0,t,H-2*t,D-t);
+ addBox(W/2-t/2,0,0,t,H-2*t,D-t);
+ addBox(0,0,back+t/2,W-2*t,H-2*t,t,backMat);
+ const centralWidth=W/3,dividerX=centralWidth/2+t/2;
+ addBox(-dividerX,0,0,t,H-2*t,D-t,inner);
+ addBox(dividerX,0,0,t,H-2*t,D-t,inner);
+ // Nicho central aberto com uma prateleira regulada pelo meio da altura.
+ const shelfY=bottom+(H-2*t)*.53;
+ if(Number(spec.shelves)>0)addBox(0,shelfY,0,centralWidth-t,D-2*t,t,wood);
+ // Duas portas frontais nos módulos laterais.
+ const doorWidth=(W-centralWidth)/2-t*.75,doorHeight=H-2*t-t*.35,doorY=bottom+t+doorHeight/2;
+ const doorOffset=centralWidth/2+doorWidth/2+t*.15;
+ const doorZ=front+t*.55;
+ addBox(-doorOffset,doorY,doorZ,doorWidth,doorHeight,t,wood);
+ addBox(doorOffset,doorY,doorZ,doorWidth,doorHeight,t,wood);
+ // Puxadores verticais próximos ao encontro das portas com o vão central.
+ const handleX=centralWidth/2+22,handleY=0,handleZ=front+t+7;
+ const handle=(x)=>{const h=addBox(x,handleY,handleZ,8,72,8,metal);const cap1=addBox(x,handleY-31,handleZ-3,13,5,5,metal);const cap2=addBox(x,handleY+31,handleZ-3,13,5,5,metal);return h};
+ handle(-handleX);handle(handleX);
+ // Prateleira inferior interna dos módulos laterais para dar leitura de compartimento.
+ addBox(-doorOffset,bottom+t+(H-2*t)*.28,back+t+((D-2*t)/2),doorWidth*.92,t,D-2*t,inner);
+ addBox(doorOffset,bottom+t+(H-2*t)*.28,back+t+((D-2*t)/2),doorWidth*.92,t,D-2*t,inner);
+ // Moldura frontal discreta do casco.
+ addBox(0,top-t/2,front+t*.15,W,t*.45,t*.45,inner);
+ const sourceSizeMm={x:W,y:H,z:D};let current={width:Number(dimensions.width)||W,height:Number(dimensions.height)||H,depth:Number(dimensions.depth)||D};
+ group.scale.set(current.width/W,current.height/H,current.depth/D);
+ const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(host.clientWidth||700,host.clientHeight||460);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.innerHTML='';host.appendChild(renderer.domElement);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#eef1ef');scene.add(new THREE.HemisphereLight(0xffffff,0x89918b,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(4,7,6);scene.add(key);const fill=new THREE.DirectionalLight(0xffffff,1.15);fill.position.set(-5,2,-4);scene.add(fill);scene.add(new THREE.GridHelper(Math.max(W,D)*1.7,20,0xc4ccc6,0xdde2de));scene.add(group);
+ const camera=new THREE.PerspectiveCamera(42,Math.max(.1,host.clientWidth/Math.max(1,host.clientHeight)),.01,100000),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.screenSpacePanning=true;
+ const fit=()=>{const maxDim=Math.max(current.width,current.height,current.depth),dist=maxDim*2.25;camera.position.set(dist*.95,dist*.7,dist*1.1);camera.near=Math.max(.001,maxDim/10000);camera.far=maxDim*100;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.minDistance=maxDim*.35;controls.maxDistance=maxDim*12;controls.update()};fit();
+ const resizeModel=d=>{current={width:Number(d.width)||current.width,height:Number(d.height)||current.height,depth:Number(d.depth)||current.depth};group.scale.set(current.width/W,current.height/H,current.depth/D);fit();return{...current}};
+ let raf=0,dead=false;const onResize=()=>{if(dead)return;const w=host.clientWidth||700,h=host.clientHeight||460;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};const observer=new ResizeObserver(onResize);observer.observe(host);const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
+ return{resize:resizeModel,reset:fit,sourceSizeMm,destroy(){dead=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();renderer.domElement.remove();group.traverse(o=>{o.geometry?.dispose?.();if(o.material&&!Array.isArray(o.material))o.material.dispose()})}};
 }
