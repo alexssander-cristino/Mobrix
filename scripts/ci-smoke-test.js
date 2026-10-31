@@ -32,7 +32,7 @@ async function waitForServer() {
       if (result.status === 200) return;
       if (result.status === 503) throw new Error(result.data?.error || 'Schema do banco incompleto.');
     } catch (error) {
-      if (error.message.includes('Schema')) throw error;
+      if (error.message.includes('Banco conectado') || error.message.includes('Schema do banco')) throw error;
     }
     await new Promise(resolve => setTimeout(resolve, 500));
   }
