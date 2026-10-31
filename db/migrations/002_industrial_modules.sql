@@ -95,3 +95,51 @@ DROP TRIGGER IF EXISTS trg_stage_logs_company ON production_stage_logs;
 CREATE TRIGGER trg_stage_logs_company BEFORE INSERT OR UPDATE OF company_id, order_id ON production_stage_logs
 FOR EACH ROW EXECUTE FUNCTION mobrix_assert_order_company();
 
+
+
+CREATE OR REPLACE FUNCTION mobrix_assert_material_company() RETURNS trigger AS $$
+BEGIN
+  IF NEW.material_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM materials WHERE id=NEW.material_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Material não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_parts_material_company ON project_parts;
+CREATE TRIGGER trg_parts_material_company BEFORE INSERT OR UPDATE OF company_id, material_id ON project_parts
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_material_company();
+
+DROP TRIGGER IF EXISTS trg_offcuts_material_company ON offcuts;
+CREATE TRIGGER trg_offcuts_material_company BEFORE INSERT OR UPDATE OF company_id, material_id ON offcuts
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_material_company();
+
+DROP TRIGGER IF EXISTS trg_offcuts_project_company ON offcuts;
+CREATE TRIGGER trg_offcuts_project_company BEFORE INSERT OR UPDATE OF company_id, source_project_id ON offcuts
+FOR EACH ROW WHEN (NEW.source_project_id IS NOT NULL) EXECUTE FUNCTION mobrix_assert_project_company();
+
+CREATE OR REPLACE FUNCTION mobrix_assert_order_project_company() RETURNS trigger AS $$
+BEGIN
+  IF NEW.project_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM projects WHERE id=NEW.project_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Projeto da ordem não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_order_project_company ON production_orders;
+CREATE TRIGGER trg_order_project_company BEFORE INSERT OR UPDATE OF company_id, project_id ON production_orders
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_order_project_company();
+
+CREATE OR REPLACE FUNCTION mobrix_assert_time_order_company() RETURNS trigger AS $$
+BEGIN
+  IF NEW.order_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM production_orders WHERE id=NEW.order_id AND company_id=NEW.company_id) THEN
+    RAISE EXCEPTION 'Ordem de produção não pertence à empresa autenticada' USING ERRCODE='23503';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_time_order_company ON time_entries;
+CREATE TRIGGER trg_time_order_company BEFORE INSERT OR UPDATE OF company_id, order_id ON time_entries
+FOR EACH ROW EXECUTE FUNCTION mobrix_assert_time_order_company();
