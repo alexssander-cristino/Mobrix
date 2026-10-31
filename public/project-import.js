@@ -97,45 +97,52 @@ export async function mountDrawingModel(host,details,dimensions={}){
 export async function mountSpecifiedFurniture(host,details,dimensions={}){
  const THREE=await import('https://cdn.jsdelivr.net/npm/three@'+THREE_VERSION+'/build/three.module.js');
  const [{OrbitControls}]=await Promise.all([import('https://cdn.jsdelivr.net/npm/three@'+THREE_VERSION+'/examples/jsm/controls/OrbitControls.js')]);
- const spec=details.specification||{},source={width:Number(spec.dimensions?.width)||1800,height:Number(spec.dimensions?.height)||400,depth:Number(spec.dimensions?.depth)||500},thickness=Number(spec.thickness)||18;
+ const spec=details.specification||{},source={width:Number(spec.dimensions?.width)||1800,height:Number(spec.dimensions?.height)||400,depth:Number(spec.dimensions?.depth)||500},thickness=Math.max(12,Math.min(30,Number(spec.thickness)||18)),backThickness=6;
  const finish=String(spec.finish||'Carvalho').toLowerCase(),woodColor=/branco/.test(finish)?0xe7e3dc:/nogueira/.test(finish)?0x79563e:/preto|grafite/.test(finish)?0x44484b:0xc99b68;
- const group=new THREE.Group(),wood=new THREE.MeshStandardMaterial({color:woodColor,roughness:.78}),inner=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xd8d3ca:0x8a694a,roughness:.85}),backMat=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xe0ddd5:0x987451,roughness:.9}),metal=new THREE.MeshStandardMaterial({color:0xbfc3c4,metalness:.78,roughness:.28});
- const addBox=(x,y,z,w,h,d,mat=wood)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);group.add(mesh);return mesh};
+ const group=new THREE.Group(),wood=new THREE.MeshStandardMaterial({color:woodColor,roughness:.78}),inner=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xd8d3ca:0x987451,roughness:.85}),backMat=new THREE.MeshStandardMaterial({color:/branco/.test(finish)?0xe0ddd5:0x987451,roughness:.9}),metal=new THREE.MeshStandardMaterial({color:0xbfc3c4,metalness:.78,roughness:.28}),dark=new THREE.MeshStandardMaterial({color:0x4a4d4b,roughness:.6});
+ const parts=[],cut=[];
+ const part=(name,material,offset)=>{const g=new THREE.Group();g.userData={name,offset:offset||new THREE.Vector3(),basePosition:g.position.clone()};group.add(g);parts.push(g);return g};
+ const box=(g,x,y,z,w,h,d,mat)=>{const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.position.set(x,y,z);g.add(mesh);return mesh};
+ const addBoard=(name,w,h,d,x,y,z,mat=wood,offset=new THREE.Vector3(),cutDims={length:w,width:h,thickness:d})=>{const g=part(name,mat,offset);box(g,x,y,z,w,h,d,mat);cut.push({name,width:Math.round(cutDims.width),length:Math.round(cutDims.length),thickness:Math.round(cutDims.thickness),quantity:1,areaM2:(cutDims.length*cutDims.width/1e6),lengthScale:cutDims.lengthScale||'width',widthScale:cutDims.widthScale||'height'});return g};
  const W=source.width,H=source.height,D=source.depth,t=thickness,bottom=-H/2,top=H/2,front=D/2,back=-D/2;
- // Carcaça externa: tampo, base, laterais e fundo.
- addBox(0,top-t/2,0,W,t,D);
- addBox(0,bottom+t/2,0,W,t,D);
- addBox(-W/2+t/2,0,0,t,H-2*t,D-t);
- addBox(W/2-t/2,0,0,t,H-2*t,D-t);
- addBox(0,0,back+t/2,W-2*t,H-2*t,t,backMat);
- const centralWidth=W/3,dividerX=centralWidth/2+t/2;
- addBox(-dividerX,0,0,t,H-2*t,D-t,inner);
- addBox(dividerX,0,0,t,H-2*t,D-t,inner);
- // Nicho central aberto com uma prateleira regulada pelo meio da altura.
- const shelfY=bottom+(H-2*t)*.53;
- if(Number(spec.shelves)>0)addBox(0,shelfY,0,centralWidth-t,D-2*t,t,wood);
- // Duas portas frontais nos módulos laterais.
- const doorWidth=(W-centralWidth)/2-t*.75,doorHeight=H-2*t-t*.35,doorY=bottom+t+doorHeight/2;
- const doorOffset=centralWidth/2+doorWidth/2+t*.15;
- const doorZ=front+t*.55;
- addBox(-doorOffset,doorY,doorZ,doorWidth,doorHeight,t,wood);
- addBox(doorOffset,doorY,doorZ,doorWidth,doorHeight,t,wood);
- // Puxadores verticais próximos ao encontro das portas com o vão central.
- const handleX=centralWidth/2+22,handleY=0,handleZ=front+t+7;
- const handle=(x)=>{const h=addBox(x,handleY,handleZ,8,72,8,metal);const cap1=addBox(x,handleY-31,handleZ-3,13,5,5,metal);const cap2=addBox(x,handleY+31,handleZ-3,13,5,5,metal);return h};
- handle(-handleX);handle(handleX);
- // Prateleira inferior interna dos módulos laterais para dar leitura de compartimento.
- addBox(-doorOffset,bottom+t+(H-2*t)*.28,back+t+((D-2*t)/2),doorWidth*.92,t,D-2*t,inner);
- addBox(doorOffset,bottom+t+(H-2*t)*.28,back+t+((D-2*t)/2),doorWidth*.92,t,D-2*t,inner);
- // Moldura frontal discreta do casco.
- addBox(0,top-t/2,front+t*.15,W,t*.45,t*.45,inner);
- const sourceSizeMm={x:W,y:H,z:D};let current={width:Number(dimensions.width)||W,height:Number(dimensions.height)||H,depth:Number(dimensions.depth)||D};
+ const innerW=W-2*t,innerH=H-2*t,innerD=D-t,centerW=Math.round(W/3),sideW=(innerW-centerW)/2;
+ // Corpo: cada painel é uma peça independente e recebe identificação para a lista de corte.
+ addBoard('Tampo',W,t,D,0,top-t/2,0,wood,new THREE.Vector3(0,35,0),{length:W,width:D,thickness:t,lengthScale:'width',widthScale:'depth'});
+ addBoard('Base',W,t,D,0,bottom+t/2,0,wood,new THREE.Vector3(0,-35,0),{length:W,width:D,thickness:t,lengthScale:'width',widthScale:'depth'});
+ addBoard('Lateral esquerda',t,innerH,innerD,-W/2+t/2,0,0,wood,new THREE.Vector3(-35,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Lateral direita',t,innerH,innerD,W/2-t/2,0,0,wood,new THREE.Vector3(35,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Fundo',innerW,innerH,backThickness,0,0,back+backThickness/2,backMat,new THREE.Vector3(0,0,-35),{length:innerW,width:innerH,thickness:backThickness,lengthScale:'width',widthScale:'height'});
+ const divX=centerW/2+t/2;
+ addBoard('Divisória esquerda',t,innerH,innerD,-divX,0,0,inner,new THREE.Vector3(-18,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ addBoard('Divisória direita',t,innerH,innerD,divX,0,0,inner,new THREE.Vector3(18,0,0),{length:innerH,width:innerD,thickness:t,lengthScale:'height',widthScale:'depth'});
+ const shelfY=bottom+t+(innerH*.52);
+ if(Number(spec.shelves)>0)addBoard('Prateleira do nicho',centerW-t, t, innerD-t,0,shelfY,0,wood,new THREE.Vector3(0,0,20),{length:innerD-t,width:centerW-t,thickness:t,lengthScale:'depth',widthScale:'width'});
+ // Portas com pivô real na lateral externa: podem ser abertas para conferir o interior.
+ const doorWidth=Math.max(100,sideW-t*.35),doorHeight=innerH-t*.25,doorY=bottom+t+doorHeight/2,hingeZ=front+t*.52;
+ const hinge=(side)=>{
+  const pivot=new THREE.Group(),hingeX=side<0?-W/2+t:W/2-t;pivot.position.set(hingeX,doorY,hingeZ);group.add(pivot);parts.push(pivot);pivot.userData={name:side<0?'Porta esquerda':'Porta direita',offset:new THREE.Vector3(side*35,0,25),basePosition:pivot.position.clone()};
+  const centerX=side<0?doorWidth/2:-doorWidth/2;box(pivot,centerX,0,0,doorWidth,doorHeight,t,wood);
+  const handleX=side<0?doorWidth-34:-doorWidth+34,handle=new THREE.Group();handle.position.set(handleX,0,t/2+5);pivot.add(handle);
+  box(handle,0,0,0,7,78,7,metal);box(handle,0,-34,-3,12,5,5,metal);box(handle,0,34,-3,12,5,5,metal);
+  // Dobradiças ilustrativas; a quantidade é estimada conforme a altura.
+  const hingeCount=doorHeight>700?3:2;for(let n=0;n<hingeCount;n++){const hy=-doorHeight/2+90+n*(doorHeight-180)/Math.max(1,hingeCount-1);const h=new THREE.Mesh(new THREE.CylinderGeometry(7,7,28,12),metal);h.rotation.z=Math.PI/2;h.position.set(side<0?0:-side*doorWidth,hy,-t/2-2);pivot.add(h)}
+  cut.push({name:side<0?'Porta esquerda':'Porta direita',width:Math.round(doorWidth),length:Math.round(doorHeight),thickness:t,quantity:1,areaM2:doorWidth*doorHeight/1e6,lengthScale:'height',widthScale:'width'});
+  return pivot;
+ };
+ const leftDoor=hinge(-1),rightDoor=hinge(1);
+ const centralWidth=centerW-t,centralShelfCount=Number(spec.shelves)>0?1:0;
+ const sourceSizeMm={x:W,y:H,z:D};let current={width:Number(dimensions.width)||W,height:Number(dimensions.height)||H,depth:Number(dimensions.depth)||D},exploded=false,doorsOpen=false;
  group.scale.set(current.width/W,current.height/H,current.depth/D);
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.setSize(host.clientWidth||700,host.clientHeight||460);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;host.innerHTML='';host.appendChild(renderer.domElement);
- const scene=new THREE.Scene();scene.background=new THREE.Color('#eef1ef');scene.add(new THREE.HemisphereLight(0xffffff,0x89918b,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(4,7,6);scene.add(key);const fill=new THREE.DirectionalLight(0xffffff,1.15);fill.position.set(-5,2,-4);scene.add(fill);scene.add(new THREE.GridHelper(Math.max(W,D)*1.7,20,0xc4ccc6,0xdde2de));scene.add(group);
+ const scene=new THREE.Scene();scene.background=new THREE.Color('#eef1ef');scene.add(new THREE.HemisphereLight(0xffffff,0x89918b,2));const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(4,7,6);scene.add(key);const fill=new THREE.DirectionalLight(0xffffff,1.15);fill.position.set(-5,2,-4);scene.add(fill);const rim=new THREE.DirectionalLight(0xffffff,.8);rim.position.set(0,4,-7);scene.add(rim);scene.add(new THREE.GridHelper(Math.max(W,D)*1.7,20,0xc4ccc6,0xdde2de));scene.add(group);
  const camera=new THREE.PerspectiveCamera(42,Math.max(.1,host.clientWidth/Math.max(1,host.clientHeight)),.01,100000),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.screenSpacePanning=true;
- const fit=()=>{const maxDim=Math.max(current.width,current.height,current.depth),dist=maxDim*2.25;camera.position.set(dist*.95,dist*.7,dist*1.1);camera.near=Math.max(.001,maxDim/10000);camera.far=maxDim*100;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.minDistance=maxDim*.35;controls.maxDistance=maxDim*12;controls.update()};fit();
+ const fit=()=>{const maxDim=Math.max(current.width,current.height,current.depth),dist=maxDim*2.35;camera.position.set(dist*.95,dist*.7,dist*1.1);camera.near=Math.max(.001,maxDim/10000);camera.far=maxDim*100;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.minDistance=maxDim*.3;controls.maxDistance=maxDim*12;controls.update()};
  const resizeModel=d=>{current={width:Number(d.width)||current.width,height:Number(d.height)||current.height,depth:Number(d.depth)||current.depth};group.scale.set(current.width/W,current.height/H,current.depth/D);fit();return{...current}};
- let raf=0,dead=false;const onResize=()=>{if(dead)return;const w=host.clientWidth||700,h=host.clientHeight||460;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()};const observer=new ResizeObserver(onResize);observer.observe(host);const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};animate();
- return{resize:resizeModel,reset:fit,sourceSizeMm,destroy(){dead=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();renderer.domElement.remove();group.traverse(o=>{o.geometry?.dispose?.();if(o.material&&!Array.isArray(o.material))o.material.dispose()})}};
+ const setExploded=value=>{exploded=typeof value==='boolean'?value:!exploded;for(const p of parts){const o=p.userData.offset||new THREE.Vector3(),b=p.userData.basePosition||new THREE.Vector3();p.position.set(b.x+(exploded?o.x:0),b.y+(exploded?o.y:0),b.z+(exploded?o.z:0))}return exploded};
+ const toggleDoors=value=>{doorsOpen=typeof value==='boolean'?value:!doorsOpen;leftDoor.rotation.y=doorsOpen?-.95:0;rightDoor.rotation.y=doorsOpen?.95:0;return doorsOpen};
+ let raf=0,dead=false;const observer=new ResizeObserver(()=>{if(dead)return;const w=host.clientWidth||700,h=host.clientHeight||460;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()});observer.observe(host);
+ const animate=()=>{if(dead)return;controls.update();renderer.render(scene,camera);raf=requestAnimationFrame(animate)};fit();animate();
+ const getCutList=()=>cut.map(x=>{const scale={width:current.width/W,height:current.height/H,depth:current.depth/D};const length=Math.round(x.length*scale[x.lengthScale]),width=Math.round(x.width*scale[x.widthScale]);return{...x,length,width,thickness:x.thickness,areaM2:length*width/1e6,quantity:x.quantity}});
+ const summary={boardCount:cut.reduce((n,p)=>n+p.quantity,0),areaM2:cut.reduce((n,p)=>n+p.areaM2*p.quantity,0),thickness,backThickness,finish:spec.finish||'Carvalho',dimensions:{...source},centralShelfCount,doors:2};
+ return{resize:resizeModel,reset:fit,setExploded,toggleDoors,getCutList,summary,sourceSizeMm,destroy(){dead=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();renderer.domElement.remove();group.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.()})}};
 }
