@@ -17,7 +17,11 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 - Dashboard com projetos ativos, ordens, estoque crítico e resumo financeiro
 - Cadastro de clientes
 - Projetos e móveis com custo, preço, prazo e status
-- Ordens de produção com etapas e prioridade
+- Ordens de produção com etapas, prioridade e avanço controlado com histórico
+- Ficha técnica de peças por projeto (dimensões, espessura, quantidade e sentido do veio)
+- Banco de retalhos com dimensões, material e situação de reaproveitamento
+- Apontamento de tempo por colaborador, operação e projeto
+- Indicadores de atraso, horas apontadas e área de retalhos disponíveis
 - Materiais e saldo de estoque
 - Movimentações de estoque com validação transacional
 - Lançamentos de receitas e despesas
@@ -51,6 +55,12 @@ A aplicação ficará disponível em `http://localhost:3000`.
 - `GET|POST|PATCH /api/materials`
 - `GET|POST|PATCH /api/finance`
 - `POST /api/stock/movement`
+- `GET /api/stock/movements`
+- `GET|POST|DELETE /api/engineering/parts`
+- `GET|POST|PATCH /api/offcuts`
+- `GET|POST /api/time-entries`
+- `GET /api/production/metrics`
+- `PATCH /api/orders/:id/stage`
 
 Rotas de dados exigem `Authorization: Bearer <token>`.
 
