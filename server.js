@@ -294,13 +294,14 @@ app.post('/api/projects/:id/approve',auth,asyncRoute(async(req,res)=>{
   if(!p.rowCount){await client.query('ROLLBACK');return res.status(404).json({error:'Projeto não encontrado.'});}
   if(['cancelado','concluido'].includes(p.rows[0].status)){await client.query('ROLLBACK');return res.status(409).json({error:'Projetos concluídos ou cancelados não podem ser aprovados para produção.'});}
   let order=await client.query('SELECT * FROM production_orders WHERE project_id=$1 AND company_id=$2 ORDER BY created_at LIMIT 1',[id,company]);
-  if(!order.rowCount){
+  const created=!order.rowCount;
+  if(created){
    order=await client.query("INSERT INTO production_orders(company_id,project_id,stage,priority,due_date,notes) VALUES($1,$2,'planejamento','normal',$3,'Criada automaticamente na aprovação do projeto.') RETURNING *",[company,id,p.rows[0].deadline]);
    await client.query("INSERT INTO production_stage_logs(company_id,order_id,from_stage,to_stage,changed_by,notes) VALUES($1,$2,NULL,'planejamento',$3,'Ordem criada pela aprovação comercial.')",[company,order.rows[0].id,req.user.id]);
   }
   const updated=await client.query("UPDATE projects SET status='aprovado' WHERE id=$1 AND company_id=$2 RETURNING *",[id,company]);
   await client.query('COMMIT');
-  res.json({project:updated.rows[0],order:order.rows[0],created:order.rows[0].created_at===order.rows[0].created_at});
+  res.json({project:updated.rows[0],order:order.rows[0],created});
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
 }));
 
