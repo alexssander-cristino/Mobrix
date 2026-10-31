@@ -161,13 +161,38 @@ function calculateClassicCut(){
  result.innerHTML='<div class="classic-cut-metrics"><strong>'+sheets.length+' chapa(s)</strong><strong>'+eff.toFixed(1)+'% aproveitamento</strong><strong>'+money(sheets.length*price)+'</strong></div>'+sheets.map((sh,i)=>'<div class="cut-sheet-card"><h4>Chapa '+(i+1)+'</h4><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Plano de corte da chapa '+(i+1)+'"><rect x="0" y="0" width="'+W+'" height="'+H+'" class="cut-sheet-bg"/>'+sh.items.map(p=>'<rect x="'+p.x+'" y="'+p.y+'" width="'+p.w+'" height="'+p.h+'" class="cut-piece"/><text x="'+(p.x+p.w/2)+'" y="'+(p.y+p.h/2)+'" text-anchor="middle" dominant-baseline="middle">'+esc(p.name)+'</text>').join('')+'</svg></div>').join('')+(s.oversized?.length?'<p class="form-error">Peças maiores que a chapa: '+s.oversized.map(esc).join(', ')+'</p>':'');
  s.oversized=[];
 }
-let furnitureViewer=null,furnitureModulePromise=null;
+let furnitureViewer=null,furnitureModulePromise=null,importedModelViewer=null,projectImport=null,projectImportModulePromise=null;
 async function updateClassicModel(){
  const model=$('#classic-model');if(!model)return;
  const cfg={width:+$('#model-width')?.value||1200,height:+$('#model-height')?.value||2100,depth:+$('#model-depth')?.value||550,shelves:+$('#model-shelves')?.value||0,doors:+$('#model-doors')?.value||0,drawers:+$('#model-drawers')?.value||0,finish:$('#model-finish')?.value||'#e8e4dc'};
  model.dataset.shelves=cfg.shelves;model.dataset.doors=cfg.doors;model.dataset.drawers=cfg.drawers;
+ if(projectImport?.kind==='model'){
+  if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}
+  if(!model.querySelector('canvas'))model.innerHTML='<div class="furniture-viewer-hint">Modelo 3D importado · arraste para orbitar</div>';
+  try{projectImportModulePromise ||= import('./project-import.js');const mod=await projectImportModulePromise;if(!model.isConnected)return;if(!importedModelViewer)importedModelViewer=await mod.mountImportedModel(model,projectImport.file)}catch(err){model.innerHTML='<div class="empty-state">Falha ao abrir modelo 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX IMPORT 3D]',err)}
+  return;
+ }
+ if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}
  if(!model.querySelector('canvas')){if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}model.innerHTML='<canvas class="furniture-canvas" aria-label="Modelo 3D do móvel. Arraste para girar e use a roda para aproximar."></canvas><div class="furniture-viewer-hint">Arraste para girar · role para aproximar</div><button type="button" class="furniture-reset" data-action="classic-model-reset">Centralizar</button>'}
  try{furnitureModulePromise ||= import('./furniture-3d.js');const mod=await furnitureModulePromise;if(!model.isConnected)return;const canvas=model.querySelector('canvas');if(!furnitureViewer)furnitureViewer=mod.mountFurnitureViewer(canvas);furnitureViewer.update(cfg)}catch(err){model.innerHTML='<div class="empty-state">Não foi possível iniciar o visualizador 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX 3D]',err)}
+}
+async function importClassicProject(file){
+ if(!file)return;
+ const status=$('#project-import-status');if(status)status.textContent='Lendo '+file.name+'...';
+ try{
+  projectImportModulePromise ||= import('./project-import.js');
+  const mod=await projectImportModulePromise,details=await mod.inspectProjectFile(file);
+  if(projectImport?.url)URL.revokeObjectURL(projectImport.url);
+  projectImport={...details,file};
+  if(details.dimensions){$('#model-width').value=details.dimensions.width;$('#model-height').value=details.dimensions.height}
+  const preview=$('#project-source-preview');
+  if(preview){preview.classList.remove('hidden');preview.innerHTML=details.kind==='drawing'?'<div class="project-source-image"><img src="'+details.previewUrl+'" alt="Prévia do projeto enviado"></div><div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>'+(details.pages?details.pages+' página(s) · ':'')+(details.entities?details.entities+' entidades · ':'')+Math.max(1,Math.round(details.size/1024))+' KB</small></div>':'<div class="project-source-meta"><strong>'+esc(details.name)+'</strong><span>'+esc(details.notes)+'</span><small>Dimensões 3D: carregando...</small></div>'}
+  if(status)status.textContent=details.notes;
+  if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}
+  await updateClassicModel();
+  if(details.kind==='model'&&preview&&importedModelViewer?.size)preview.querySelector('small').textContent='Dimensões aproximadas: '+importedModelViewer.size.x.toFixed(1)+' × '+importedModelViewer.size.y.toFixed(1)+' × '+importedModelViewer.size.z.toFixed(1)+' unidades';
+  toast(details.kind==='model'?'Modelo 3D importado com sucesso.':'Projeto carregado. Confira as medidas e o modelo 3D.');
+ }catch(err){if(status)status.textContent=err.message;toast(err.message,true);console.error('[MOBRIX PROJECT IMPORT]',err)}
 }
 
 function renderSettings(){$('#page-content').innerHTML='<div class="settings-card"><p class="eyebrow">AMBIENTE DA EMPRESA</p><h3>'+esc(state.company?.name||'Minha empresa')+'</h3><p>O MOBRIX está preparado para separar os dados por empresa. Usuários, projetos, clientes, estoque e financeiro são vinculados ao ambiente autenticado.</p><p><strong>Conta:</strong> '+esc(state.user?.email||'')+'</p><p><strong>Perfil:</strong> '+esc(state.user?.role||'')+'</p><button class="btn btn-quiet" id="settings-logout">Encerrar sessão</button></div>';$('#settings-logout').addEventListener('click',()=>logout())}
