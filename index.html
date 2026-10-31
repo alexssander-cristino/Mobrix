@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marcenaria Pro</title>
+<style>
+:root{--bg:#faf7f2;--sf:#fff;--tx:#2b2218;--mu:#7a6a58;--ac:#a85d24;--bd:#e6dccf;--ok:#2f7d4f;--rd:#b3412f;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1713;--sf:#262019;--tx:#f1e9dd;--mu:#a8998a;--ac:#e0914f;--bd:#3a3128;--ok:#5cc08a;--rd:#e5786a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1713;--sf:#262019;--tx:#f1e9dd;--mu:#a8998a;--ac:#e0914f;--bd:#3a3128;--ok:#5cc08a;--rd:#e5786a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:14px 16px 0;font-weight:700;font-size:18px}
+header span{color:var(--ac)}
+nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--bd)}
+nav button{white-space:nowrap;background:none;border:1px solid var(--bd);color:var(--mu);padding:6px 12px;border-radius:99px;cursor:pointer;font:inherit}
+nav button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+main{padding:16px;max-width:980px;margin:auto}
+h2{margin:0 0 14px}h3{margin:0 0 8px;font-size:14px;color:var(--mu)}
+.f{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input,select{padding:9px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--sf);color:var(--tx);font:inherit;min-width:0;flex:1 1 130px}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:9px 14px;background:var(--ac);color:#fff}
+button.x{background:none;color:var(--rd);padding:4px 8px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.card,.c{background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px}
+.card b.big{display:block;font-size:22px}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px solid var(--bd)}
+.mu{color:var(--mu)}.ok{color:var(--ok)}.rd{color:var(--rd)}
+.lb{display:flex;flex-direction:column;flex:1 1 120px;font-size:13px;color:var(--mu)}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+@media print{body *{visibility:hidden}#prev,#prev *{visibility:visible}#prev{position:absolute;left:0;top:0;width:100%;border:0}.np{display:none!important}}
+</style>
+</head>
+<body>
+<header>Marcenaria <span>Pro</span></header>
+<nav id="nav"></nav>
+<main id="m"></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=s=>document.querySelector(s),v=id=>$('#'+id).value;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const R=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const E=['Orçamento','Produção','Montagem','Entregue'];
+let S={proj:[],fin:[],est:[],itens:[],pecas:[],cl:'',mk:0},cur='dash';
+try{S=Object.assign(S,JSON.parse(localStorage.getItem('mp')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('mp',JSON.stringify(S))}catch(e){}};
+const card=(t,x,c='')=>`<div class="card"><h3>${t}</h3><b class="big ${c}">${x}</b></div>`;
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+
+const P={
+dash(){
+ const at=S.proj.filter(p=>p.e<3),rec=sum(S.fin.filter(f=>f.t=='e'),f=>f.v),des=sum(S.fin.filter(f=>f.t=='s'),f=>f.v),bx=S.est.filter(i=>i.q<=i.m);
+ return `<h2>Visão geral</h2><div class="g">${card('Obras em andamento',at.length)}${card('Valor em carteira',R(sum(at,p=>p.v)))}${card('Saldo financeiro',R(rec-des),rec-des<0?'rd':'ok')}${card('Itens com estoque baixo',bx.length,bx.length?'rd':'')}</div>`+(bx.length?`<p class="rd">Repor: ${bx.map(i=>esc(i.n)).join(', ')}</p>`:'')+`<p class="mu">Os dados ficam salvos neste navegador.</p>`},
+proj(){
+ return `<h2>Projetos e funil de vendas</h2><div class="f"><input id="pc" placeholder="Cliente"><input id="pa" placeholder="Ambiente"><input id="pv" type="number" placeholder="Valor (R$)"><button onclick="addP()">Adicionar</button></div><div class="k">${E.map((n,i)=>`<div><h3>${n}</h3>${S.proj.map((p,j)=>p.e==i?`<div class="c"><b>${esc(p.c)}</b><br>${esc(p.a)}<br>${R(p.v)}<div class="row">${i<3?`<button onclick="mv(${j})">Avançar →</button>`:'<span></span>'}<button class="x" onclick="del('proj',${j})">×</button></div></div>`:'').join('')}</div>`).join('')}</div>`},
+orc(){
+ const t=sum(S.itens,i=>i.q*i.v),tot=t*(1+(S.mk||0)/100);
+ return `<h2>Orçamento</h2><div class="f"><input id="od" placeholder="Item (ex.: Cozinha planejada)"><input id="oq" type="number" value="1" style="max-width:80px"><input id="ov" type="number" placeholder="Valor unit. (R$)"><button onclick="addI()">Adicionar item</button></div><div class="f"><input placeholder="Cliente" value="${esc(S.cl)}" oninput="S.cl=this.value;save()"><input type="number" placeholder="Markup %" value="${S.mk||''}" onchange="S.mk=+this.value;save();go()"></div><div id="prev" class="card"><h3>Proposta comercial — ${esc(S.cl||'Cliente')}</h3><p class="mu">${new Date().toLocaleDateString('pt-BR')} · Validade: 7 dias</p><table>${S.itens.map((i,j)=>`<tr><td>${esc(i.d)}</td><td>${i.q}×</td><td>${R(i.q*i.v)}</td><td class="np"><button class="x" onclick="S.itens.splice(${j},1);save();go()">×</button></td></tr>`).join('')}</table><p class="np mu">Custo: ${R(t)}</p><p><b>Total: ${R(tot)}</b></p></div><button onclick="saveO()">Salvar como projeto</button> <button onclick="print()">Gerar PDF</button>`},
+prec(){
+ return `<h2>Precificação</h2><div class="f"><input id="a1" type="number" placeholder="Material (R$)" oninput="calcPr()"><input id="a2" type="number" placeholder="Horas de trabalho" oninput="calcPr()"><input id="a3" type="number" placeholder="Valor da hora (R$)" oninput="calcPr()"><input id="a4" type="number" placeholder="Máquinas e outros (R$)" oninput="calcPr()"><input id="a5" type="number" placeholder="Impostos %" oninput="calcPr()"><input id="a6" type="number" placeholder="Margem de lucro %" oninput="calcPr()"></div><div id="pr" class="g"></div>`},
+praz(){
+ return `<h2>Prazo de obra</h2><div class="f"><input id="b1" type="number" placeholder="Nº de ambientes" oninput="calcPz()"><input id="b2" type="number" placeholder="Dias de produção por ambiente" oninput="calcPz()"><input id="b3" type="number" placeholder="Dias de montagem por ambiente" oninput="calcPz()"><input id="b4" type="number" placeholder="Nº de montadores" oninput="calcPz()"><input id="b5" type="date" oninput="calcPz()"></div><div id="pz" class="g"></div>`},
+corte(){
+ return `<h2>Plano de corte</h2><p class="mu">Informe as peças e veja o encaixe na chapa, o aproveitamento e quanto você perde em dinheiro.</p><div class="f"><input id="c1" type="number" value="${(S.ch||[2750,1840,''])[0]}" placeholder="Chapa: comprimento (mm)" oninput="calcC()"><input id="c2" type="number" value="${(S.ch||[2750,1840,''])[1]}" placeholder="Chapa: largura (mm)" oninput="calcC()"><input id="c3" type="number" value="${(S.ch||[2750,1840,''])[2]}" placeholder="Preço da chapa (R$)" oninput="calcC()"><label class="mu" style="flex:1 1 100%"><input id="c4" type="checkbox" ${S.nr?'':'checked'} onchange="S.nr=!this.checked;save();calcC()" style="flex:none"> Permitir girar peças (desmarque se o veio da madeira importa)</label></div><div class="f"><input id="cl" type="number" placeholder="Peça: comprimento (mm)"><input id="ca" type="number" placeholder="Peça: largura (mm)"><input id="cq" type="number" value="1" style="max-width:80px"><button onclick="addC()">Adicionar peça</button></div><p class="mu">${S.pecas.map((p,j)=>`${p.l}×${p.a} (${p.q}x) <button class="x" onclick="del('pecas',${j})">×</button>`).join(' · ')}</p><div id="cr"></div>`},
+d3(){
+ const L=(t,id,val,mx)=>`<label class="lb">${t}<input id="${id}" type="number" value="${val}" oninput="upd3()"></label>`;
+ return `<h2>Visualizador 3D</h2><div id="ctl"><div class="f">${L('Largura (mm)','w1',1200)}${L('Altura (mm)','w2',2100)}${L('Profundidade (mm)','w3',550)}</div><div class="f">${L('Prateleiras','w4',3)}${L('Portas','w5',2)}${L('Gavetas','w6',2)}<label class="lb">Acabamento<select id="w7" onchange="upd3()">${Object.keys(MAT).map(k=>`<option>${k}</option>`).join('')}</select></label></div><label class="mu"><input id="w8" type="checkbox" checked onchange="upd3()" style="flex:none"> Puxadores</label></div><div id="cv" style="margin:10px 0"></div><p class="mu">Arraste para girar e use o scroll para dar zoom.</p><div class="f"><button onclick="shot3()">Capturar imagem</button><button onclick="var c=$('#ctl');c.style.display=c.style.display?'':'none'">Modo apresentação</button><button onclick="to3C()">Enviar peças ao plano de corte</button></div><div id="shot"></div>`},
+fin(){
+ const rec=sum(S.fin.filter(f=>f.t=='e'),f=>f.v),des=sum(S.fin.filter(f=>f.t=='s'),f=>f.v);
+ return `<h2>Financeiro</h2><div class="g">${card('Entradas',R(rec),'ok')}${card('Saídas',R(des),'rd')}${card('Saldo',R(rec-des))}</div><br><div class="f"><select id="ft"><option value="e">Entrada</option><option value="s">Saída</option></select><input id="fd" placeholder="Descrição"><input id="fv" type="number" placeholder="Valor (R$)"><button onclick="addF()">Lançar</button></div>${S.fin.map((f,j)=>`<div class="c row"><span>${esc(f.d)}</span><span class="${f.t=='e'?'ok':'rd'}">${f.t=='e'?'+':'−'}${R(f.v)} <button class="x" onclick="del('fin',${j})">×</button></span></div>`).join('')}`},
+est(){
+ return `<h2>Estoque</h2><div class="f"><input id="en" placeholder="Material (ex.: MDF 18mm branco)"><input id="eq" type="number" placeholder="Qtd"><input id="em" type="number" placeholder="Mínimo"><button onclick="addE()">Adicionar</button></div>${S.est.map((i,j)=>`<div class="c row"><span>${esc(i.n)} ${i.q<=i.m?'<b class="rd">· baixo</b>':''}</span><span><button class="x" onclick="qty(${j},-1)">−</button> <b>${i.q}</b> <button class="x" onclick="qty(${j},1)">+</button> <button class="x" onclick="del('est',${j})">×</button></span></div>`).join('')}`}
+};
+const T={dash:'Painel',proj:'Projetos',orc:'Orçamento',prec:'Precificação',praz:'Prazo de obra',corte:'Plano de corte',d3:'Visualizador 3D',fin:'Financeiro',est:'Estoque'};
+
+function go(p){cur=p||cur;$('#nav').innerHTML=Object.keys(T).map(k=>`<button class="${k==cur?'on':''}" onclick="go('${k}')">${T[k]}</button>`).join('');$('#m').innerHTML=P[cur]();if(cur=='prec')calcPr();if(cur=='praz')calcPz();if(cur=='corte')calcC();if(cur=='d3')init3()}
+function del(k,j){S[k].splice(j,1);save();go()}
+function addP(){if(!v('pc'))return;S.proj.push({c:v('pc'),a:v('pa'),v:+v('pv')||0,e:0});save();go()}
+function mv(j){S.proj[j].e++;save();go()}
+function addI(){if(!v('od'))return;S.itens.push({d:v('od'),q:+v('oq')||1,v:+v('ov')||0});save();go()}
+function saveO(){const t=sum(S.itens,i=>i.q*i.v)*(1+(S.mk||0)/100);if(!S.itens.length)return;S.proj.push({c:S.cl||'Cliente',a:S.itens.map(i=>i.d).join(', ').slice(0,60),v:t,e:0});S.itens=[];S.cl='';S.mk=0;save();go('proj')}
+function addF(){if(!v('fd'))return;S.fin.unshift({t:v('ft'),d:v('fd'),v:+v('fv')||0});save();go()}
+function addE(){if(!v('en'))return;S.est.push({n:v('en'),q:+v('eq')||0,m:+v('em')||0});save();go()}
+function qty(j,d){S.est[j].q=Math.max(0,S.est[j].q+d);save();go()}
+function calcPr(){
+ const n=i=>+v('a'+i)||0,c=n(1)+n(2)*n(3)+n(4),f=1-(n(5)+n(6))/100;
+ $('#pr').innerHTML=f>0?card('Custo total',R(c))+card('Preço de venda',R(c/f))+card('Lucro estimado',R(c/f*n(6)/100),'ok'):card('Atenção','Impostos + margem devem ficar abaixo de 100%','rd')}
+function calcPz(){
+ const n=i=>+v('b'+i)||0,pd=n(1)*n(2),mt=Math.ceil(n(1)*n(3)/Math.max(1,n(4))),tot=pd+mt;
+ let h='';if(v('b5')&&tot){const d=new Date(v('b5')+'T12:00:00');let k=tot;while(k>0){d.setDate(d.getDate()+1);if(d.getDay()%6)k--}h=card('Entrega prevista',d.toLocaleDateString('pt-BR'))}
+ $('#pz').innerHTML=card('Produção',pd+' dias úteis')+card('Montagem',mt+' dias úteis')+card('Total',tot+' dias úteis')+h}
+function addC(){if(!+v('cl')||!+v('ca'))return;S.pecas.push({l:+v('cl'),a:+v('ca'),q:+v('cq')||1});save();go()}
+let CR={n:0,pr:0};
+function toO(){if(!CR.n)return;S.itens.push({d:'Chapas de MDF ('+CR.n+')',q:CR.n,v:CR.pr});save();go('orc')}
+function calcC(){
+ const W=+v('c1')||2750,H=+v('c2')||1840,pr=+v('c3')||0,k=3;
+ let ps=[];S.pecas.forEach(p=>{for(let i=0;i<p.q;i++)ps.push({w:p.l,h:p.a})});
+ const rot=$('#c4').checked;ps=ps.map(p=>rot&&p.w<p.h&&p.h<=W&&p.w<=H?{w:p.h,h:p.w}:p);ps.sort((a,b)=>b.h-a.h||b.w-a.w);
+ const bad=ps.filter(p=>p.w>W||p.h>H),sh=[];ps=ps.filter(p=>p.w<=W&&p.h<=H);
+ ps.forEach(p=>{let ok=false;
+  for(const s of sh){
+   for(const r of s.r){if(r.h>=p.h&&W-r.x>=p.w){s.p.push({x:r.x,y:r.y,w:p.w,h:p.h});r.x+=p.w+k;ok=true;break}}
+   if(ok)break;
+   const l=s.r[s.r.length-1],y=l.y+l.h+k;
+   if(y+p.h<=H){s.r.push({x:p.w+k,y,h:p.h});s.p.push({x:0,y,w:p.w,h:p.h});ok=true;break}
+  }
+  if(!ok)sh.push({r:[{x:p.w+k,y:0,h:p.h}],p:[{x:0,y:0,w:p.w,h:p.h}]})});
+ const used=sum(ps,p=>p.w*p.h),tot=sh.length*W*H,u=tot?used/tot:0,custo=sh.length*pr;
+ CR={n:sh.length,pr};S.ch=[W,H,pr||''];save();
+ const fs=Math.round(W/55);
+ const svg=sh.map((s,i)=>`<div class="card"><h3>Chapa ${i+1} · ${(sum(s.p,p=>p.w*p.h)/(W*H)*100).toFixed(0)}% aproveitada</h3><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><rect width="${W}" height="${H}" style="fill:var(--sf);stroke:var(--bd)" stroke-width="6"/>${s.p.map(p=>`<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" style="fill:var(--ac);fill-opacity:.35;stroke:var(--ac)" stroke-width="4"/><text x="${p.x+p.w/2}" y="${p.y+p.h/2}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" style="fill:var(--tx)">${p.w}×${p.h}</text>`).join('')}</svg></div>`).join('');
+ $('#cr').innerHTML=(ps.length?`<div class="g">${card('Chapas necessárias',sh.length)}${card('Aproveitamento',(u*100).toFixed(1)+'%',u>=.8?'ok':'rd')}${card('Custo das chapas',R(custo))}${card('Desperdício em R$',R(custo*(1-u)),'rd')}</div><br><p><button onclick="toO()">Lançar chapas no orçamento</button></p>`:'')+(bad.length?`<p class="rd">${bad.length} peça(s) maiores que a chapa foram ignoradas.</p>`:'')+svg}
+const MAT={Branco:0xf2efe8,Carvalho:0xc49a6c,Grafite:0x4a4d52,Nogueira:0x6b4a32};let TH={};
+function dm3(){const c=(i,a,b)=>Math.round(Math.min(b,Math.max(a,+v(i)||a)*1)*1000)/1000,W=c('w1',300,3000)/1000,H=c('w2',300,2700)/1000,D=c('w3',200,900)/1000,s=Math.round(c('w4',0,10)),nd=Math.round(c('w5',0,4)),n=Math.round(c('w6',0,8)),t=.018,dh=Math.min(.2,H*.6/Math.max(1,n)),zb=t+n*dh+(n?t:0);return{W,H,D,s,nd,n,t,dh,zb,zh:H-t-zb}}
+function init3(){
+ const el=$('#cv');if(!window.THREE){el.innerHTML='<p class="rd">Não foi possível carregar a biblioteca 3D.</p>';return}
+ const w=el.clientWidth||600,h=Math.min(420,Math.round(w*.75)),r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+ r.setSize(w,h);r.setClearColor(0xe9e2d6,1);r.setPixelRatio(Math.min(devicePixelRatio,2));el.appendChild(r.domElement);
+ const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,w/h,.1,50),g=new THREE.Group();
+ sc.add(new THREE.AmbientLight(0xffffff,.7));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(2,3,4);sc.add(dl);sc.add(g);
+ TH={r,sc,cam,g,rx:-.15,ry:.5,z:2.2,d:2};
+ const cv=r.domElement;let dr=null;cv.style.touchAction='none';cv.style.width='100%';cv.style.height='auto';
+ cv.onpointerdown=e=>{dr=[e.clientX,e.clientY]};
+ cv.onpointermove=e=>{if(!dr)return;TH.ry+=(e.clientX-dr[0])*.008;TH.rx=Math.max(-1.2,Math.min(1.2,TH.rx+(e.clientY-dr[1])*.008));dr=[e.clientX,e.clientY];draw3()};
+ cv.onpointerup=cv.onpointerleave=()=>{dr=null};
+ cv.onwheel=e=>{e.preventDefault();TH.z=Math.max(1.2,Math.min(4,TH.z+e.deltaY*.002));draw3()};
+ upd3()}
+function upd3(){if(TH.r){build3();draw3()}}
+function draw3(){const{r,sc,cam,g}=TH;g.rotation.set(TH.rx,TH.ry,0);cam.position.set(0,0,TH.d*TH.z);cam.lookAt(0,0,0);r.render(sc,cam)}
+function build3(){
+ const{W,H,D,t,s,nd,n,dh,zb,zh}=dm3(),g=TH.g,iw=W-2*t;TH.d=Math.max(W,H,D);
+ while(g.children.length){const o=g.children[0];g.remove(o);o.geometry.dispose()}
+ const m=new THREE.MeshStandardMaterial({color:MAT[v('w7')],roughness:.75}),hm=new THREE.MeshStandardMaterial({color:0xb8bcc2,metalness:.8,roughness:.3}),hd=$('#w8').checked;
+ const bx=(w,h,dp,x,y,z,mt)=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,dp),mt||m);b.position.set(x-W/2,y-H/2,z-D/2);g.add(b)};
+ bx(t,H,D,t/2,H/2,D/2);bx(t,H,D,W-t/2,H/2,D/2);bx(iw,t,D,W/2,H-t/2,D/2);bx(iw,t,D,W/2,t/2,D/2);bx(iw,H-2*t,.006,W/2,H/2,.003);
+ if(n)bx(iw,t,D-.02,W/2,t+n*dh+t/2,(D-.02)/2);
+ for(let i=1;i<=s;i++)bx(iw,t,D-.02,W/2,zb+i*zh/(s+1),(D-.02)/2);
+ for(let i=0;i<n;i++){const y=t+i*dh+dh/2;bx(iw-.004,dh-.004,t,W/2,y,D+t/2);if(hd)bx(.14,.012,.014,W/2,y,D+t+.007,hm)}
+ if(zh>.1)for(let i=0;i<nd;i++){const dw=iw/nd,y=zb+zh/2;bx(dw-.004,zh-.004,t,t+dw*(i+.5),y,D+t/2);if(hd){const hx=(nd==1||i+.5<nd/2)?t+dw*(i+1)-.03:t+dw*i+.03;bx(.012,Math.min(.2,zh*.3),.014,hx,y,D+t+.007,hm)}}}
+function shot3(){draw3();$('#shot').innerHTML='<p class="mu">Imagem capturada. Toque e segure (ou clique com o botão direito) para salvar.</p><img style="width:100%;border-radius:8px" src="'+TH.r.domElement.toDataURL('image/png')+'">'}
+function to3C(){
+ const{W,H,D,t,s,nd,n,dh,zh}=dm3(),mm=x=>Math.round(x*1000),iw=W-2*t,dw=iw/Math.max(1,nd);
+ [{l:mm(H),a:mm(D),q:2},{l:mm(iw),a:mm(D),q:2},{l:mm(iw),a:mm(D-.02),q:s+(n?1:0)},{l:mm(zh-.004),a:mm(dw-.004),q:zh>.1?nd:0},{l:mm(iw-.004),a:mm(dh-.004),q:n}].filter(p=>p.q>0).forEach(p=>S.pecas.push(p));
+ save();go('corte')}
+go();
+</script>
+</body>
+</html>
