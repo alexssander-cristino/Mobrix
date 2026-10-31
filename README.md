@@ -25,6 +25,7 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 - Materiais e saldo de estoque
 - Movimentações de estoque com validação transacional
 - Lançamentos de receitas e despesas
+- Ferramentas originais de orçamento, precificação, prazo, plano de corte e visualização 3D preservadas em `public/ferramentas-legadas.html` (ainda com armazenamento local, até a migração específica desses módulos para PostgreSQL).
 - Interface responsiva
 
 ## Executar localmente
