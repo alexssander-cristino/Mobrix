@@ -1,7 +1,7 @@
-name: Validate Mobrix
+name: Validate Madevix
 on:
   push:
-    branches: [main, feat/industrial-marceria-pro]
+    branches: [main, feat/industrial-marceria-pro, feat/madevix-full-erp-redesign]
   pull_request:
     branches: [main]
 jobs:
@@ -30,7 +30,6 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npm run db:setup
       - run: npm run db:setup
       - run: npm test
       - run: node scripts/ci-smoke-test.js

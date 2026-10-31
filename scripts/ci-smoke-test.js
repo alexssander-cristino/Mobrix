@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 const port = 3187;
 const base = `http://127.0.0.1:${port}/api`;
-const jwtSecret = process.env.JWT_SECRET || 'mobrix-ci-secret-'.padEnd(48, 'x');
+const jwtSecret = process.env.JWT_SECRET || 'madevix-ci-secret-'.padEnd(48, 'x');
 let server;
 
 async function request(path, { token, method = 'GET', body } = {}) {
@@ -53,10 +53,10 @@ async function main() {
     const health = await request('/health');
     assert.equal(health.data?.ok, true, 'Health check não confirmou banco e schema.');
 
-    const email = `smoke-${Date.now()}@mobrix.test`;
+    const email = `smoke-${Date.now()}@madevix.test`;
     const registered = await expectStatus(await request('/auth/register', {
       method: 'POST',
-      body: { company: 'MOBRIX CI', name: 'Administrador CI', email, password: 'Senha-forte-123' }
+      body: { company: 'MADEVIX CI', name: 'Administrador CI', email, password: 'Senha-forte-123' }
     }), 201, 'Cadastro');
     assert.ok(registered.token && registered.user?.company_id, 'Cadastro não retornou sessão válida.');
 
@@ -117,7 +117,7 @@ async function main() {
 
     const second = await expectStatus(await request('/auth/register', {
       method: 'POST',
-      body: { company: 'Outra empresa CI', name: 'Outro admin', email: `other-${Date.now()}@mobrix.test`, password: 'Senha-forte-123' }
+      body: { company: 'Outra empresa CI', name: 'Outro admin', email: `other-${Date.now()}@madevix.test`, password: 'Senha-forte-123' }
     }), 201, 'Cadastro de segunda empresa');
     const isolated = await expectStatus(await request('/customers', { token: second.token }), 200, 'Isolamento entre empresas');
     assert.equal(isolated.length, 0, 'Uma empresa conseguiu visualizar dados de outra empresa.');
