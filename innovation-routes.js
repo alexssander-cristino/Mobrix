@@ -70,11 +70,11 @@ module.exports = function registerInnovationRoutes(app,{pool,auth,asyncRoute}){
   const p=await pool.query('SELECT id FROM projects WHERE id=$1 AND company_id=$2',[project,c]);if(!p.rowCount)return res.status(404).json({error:'Projeto não encontrado.'});
   if(orderId){const o=await pool.query('SELECT id FROM production_orders WHERE id=$1 AND project_id=$2 AND company_id=$3',[orderId,project,c]);if(!o.rowCount)return res.status(400).json({error:'Ordem inválida para este projeto.'})}
   const parts=Array.isArray(b.parts)?b.parts:[];if(!parts.length)return res.status(400).json({error:'Selecione ao menos uma peça para etiquetar.'});
-  const created=[];
-  for(const item of parts.slice(0,200)){
+  const created=[];let remainingLabels=500;
+  for(const item of parts.slice(0,200)){if(remainingLabels<=0)break;
    const part=await pool.query('SELECT id,name,length_mm,width_mm,thickness_mm,quantity FROM project_parts WHERE id=$1 AND project_id=$2 AND company_id=$3',[item.part_id,project,c]);if(!part.rowCount)continue;
-   for(let i=1;i<=Math.min(100,Number(part.rows[0].quantity)||1);i++){
-    const code='MBX-'+randomUUID().replace(/-/g,'').slice(0,12).toUpperCase(),r=await pool.query('INSERT INTO production_trace_labels(company_id,project_id,part_id,order_id,label_code,part_name,dimensions,unit_number) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',[c,project,part.rows[0].id,orderId,code,part.rows[0].name,part.rows[0].length_mm+' × '+part.rows[0].width_mm+' × '+part.rows[0].thickness_mm+' mm',i]);created.push(r.rows[0]);
+   for(let i=1;i<=Math.min(remainingLabels,100,Number(part.rows[0].quantity)||1);i++){
+    const code='MBX-'+randomUUID().replace(/-/g,'').slice(0,12).toUpperCase(),r=await pool.query('INSERT INTO production_trace_labels(company_id,project_id,part_id,order_id,label_code,part_name,dimensions,unit_number) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',[c,project,part.rows[0].id,orderId,code,part.rows[0].name,part.rows[0].length_mm+' × '+part.rows[0].width_mm+' × '+part.rows[0].thickness_mm+' mm',i]);created.push(r.rows[0]);remainingLabels--;
    }
   }
   res.status(201).json({labels:created});
