@@ -75,7 +75,7 @@ async function auth(req, res, next) {
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
-  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity','studio_machines','studio_machine_logs','studio_schedule','studio_nesting_runs','studio_supplier_quotes','studio_configurations','studio_inspections','studio_passports'];
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity','studio_machines','studio_machine_logs','studio_schedule','studio_nesting_runs','studio_supplier_quotes','studio_configurations','studio_inspections','studio_passports','studio_autopilot_actions','studio_reverse_engineering','studio_cnc_exports','studio_vision_reviews','studio_showroom_configs','studio_factory_simulations','studio_inventory_scans','studio_assembly_guides','studio_predictive_snapshots','studio_iot_devices','studio_machine_telemetry','studio_collaboration_comments','studio_product_history'];
   const result = await pool.query(
     'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
     ['public', requiredTables]
@@ -474,6 +474,7 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 require('./advanced-routes')(app, { pool, auth, asyncRoute });
 require('./innovation-routes')(app, { pool, auth, asyncRoute });
 require('./advanced-studio-routes')(app, { pool, auth, asyncRoute });
+require('./intelligent-factory-routes')(app, { pool, auth, asyncRoute });
 
 app.use((err, _req, res, _next) => {
   console.error('[MADEVIX API]', err);
@@ -491,6 +492,7 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ error: message, ...(process.env.NODE_ENV !== 'production' && err.code ? { code: err.code } : {}) });
 });
 app.get('/passaporte/:token', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'passport.html')));
+app.get('/showroom/:token', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'showroom.html')));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const port = Number(process.env.PORT || 3000);
