@@ -68,7 +68,7 @@
  root().addEventListener('change',async e=>{
   const el=e.target;
   if(el.dataset.scheduleStatus){try{await api('/studio/schedule/'+el.dataset.scheduleStatus,{method:'PATCH',body:JSON.stringify({status:el.value})});toast('Agenda atualizada.')}catch(err){toast(err.message,true)}}
-  if(el.dataset.machineStatus){try{await api('/studio/machines/'+el.dataset.machineStatus,{method:'PATCH',body:JSON.stringify({status:el.dataset.status})});toast('Situação atualizada.')}catch(err){toast(err.message,true)}}
+  
  });
  root().addEventListener('click',e=>{const b=e.target.closest('[data-copy-passport]');if(b){navigator.clipboard?.writeText(b.dataset.copyPassport).then(()=>toast('Link copiado.')).catch(()=>toast('Não foi possível copiar o link.',true))}});
  window.renderAdvancedStudio=render;
