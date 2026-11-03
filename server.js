@@ -471,6 +471,8 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 }));
 
 
+require('./advanced-routes')(app, { pool, auth, asyncRoute });
+
 app.use((err, _req, res, _next) => {
   console.error('[MADEVIX API]', err);
   const knownErrors = {
