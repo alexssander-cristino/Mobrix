@@ -140,6 +140,13 @@ async function main() {
         checklist: [{ item: 'Medidas conferidas', ok: true }, { item: 'Corte sem lascas', ok: true }] }
     }), 201, 'Inspeção de qualidade');
     assert.equal(inspection.checklist.length, 2, 'Checklist de qualidade não foi persistido.');
+    const incompleteInspection = await request('/quality/checks', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, order_id: order.id, stage: 'Montagem', result: 'aprovado',
+        checklist: [{ item: 'Ferragens conferidas', ok: false }] }
+    });
+    assert.equal(incompleteInspection.status, 400, 'Inspeção incompleta não deveria ser aprovada.');
+
     await expectStatus(await request('/quality/checks', { token: registered.token }), 200, 'Histórico de qualidade');
 
     const portal = await expectStatus(await request('/projects/'+project.id+'/portal', {
@@ -147,7 +154,8 @@ async function main() {
     }), 201, 'Criação do portal do cliente');
     assert.ok(portal.url && portal.id, 'Portal não retornou link e identificador.');
     const portalToken = new URL(portal.url).pathname.split('/').pop();
-    await expectStatus(await request('/portal/'+portalToken), 200, 'Acesso público do portal');
+    const portalData = await expectStatus(await request('/portal/'+portalToken), 200, 'Acesso público do portal');
+    assert.ok(!('description' in portalData.project), 'Portal público não deve expor descrição interna.');
     await expectStatus(await request('/portal/links', { token: registered.token }), 200, 'Listagem de acessos do portal');
 
     const second = await expectStatus(await request('/auth/register', {
