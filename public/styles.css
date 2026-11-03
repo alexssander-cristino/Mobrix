@@ -1920,3 +1920,100 @@ button:disabled{opacity:.48;cursor:not-allowed;transform:none!important}
 @media(max-width:760px){
  .sidebar .nav-item .nav-text,.sidebar .sidebar-settings-link .nav-text{white-space:nowrap}
 }
+
+
+/* MOBRIX — acabamento visual industrial, menos branco chapado */
+:root{
+  --ink:#24252a;
+  --muted:#777b84;
+  --line:#dfe1e5;
+  --surface:#fbfbfc;
+  --purple:#c62828;
+  --purple-soft:#f8e9e9;
+  --navy:#191a1e;
+  --green:#26734d;
+  --red:#c62828;
+  --shadow:0 7px 22px rgba(24,25,30,.055);
+  color-scheme:light;
+}
+body{background:#eceef1;color:var(--ink)}
+.main{background:#eceef1}
+.topbar{
+  background:#222328;color:#f7f7f8;border-bottom:1px solid #34353b;
+  box-shadow:0 3px 12px rgba(18,19,23,.10)
+}
+.topbar h1{color:#fff}
+.today{color:#a5a7ae}
+.avatar-small{background:#393a41;color:#fff}
+.page-content{padding-top:32px}
+.welcome-row h2,.page-toolbar h2{color:#24252a}
+.stat-card,.panel,.table-panel{
+  background:#fbfbfc;border:1px solid #dfe1e5;
+  box-shadow:0 5px 18px rgba(25,26,31,.045);
+  border-radius:12px
+}
+.stat-card{position:relative;overflow:hidden;padding:19px 19px 17px}
+.stat-card:before{
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;
+  background:#c62828;opacity:.8
+}
+.stat-head{color:#747780}
+.stat-icon{background:#f7e7e7;color:#b52222}
+.stat-value{color:#24252a}
+.stat-foot{color:#858891}
+.panel{padding:20px}
+.panel-head{padding-bottom:12px;border-bottom:1px solid #e9eaed}
+.panel-head h3{color:#292a30}
+.panel-head p{color:#858891}
+.data-row{border-bottom-color:#e9eaed}
+.data-main strong{color:#303138}
+.data-main small{color:#858891}
+th{background:#e9eaed;color:#646770;border-bottom:1px solid #d9dbe0}
+td{color:#555861;border-top-color:#e9eaed}
+td strong{color:#292a30}
+.table-panel{background:#fbfbfc}
+.pill{background:#f7e7e7;color:#a51e1e}
+.btn-secondary{background:#f4e7e7;color:#a51e1e}
+.btn-quiet{background:#e9eaed;color:#4e5058}
+.search-input,.field input,.field select,.field textarea,.form-stack input{
+  background:#f7f7f8;border-color:#dfe1e5;color:#282930
+}
+.search-input:focus,.field input:focus,.field select:focus,.field textarea:focus{
+  background:#fff;border-color:#c62828;box-shadow:0 0 0 3px rgba(198,40,40,.10)
+}
+.modal{background:#fbfbfc;border:1px solid #dfe1e5}
+.modal-head{background:#25262b;color:#fff;border-bottom:1px solid #393a40}
+.modal-head h3{color:#fff}
+.modal-close{background:#3a3b42;color:#fff}
+.modal-body{background:#fbfbfc}
+.modal-foot{background:#f0f1f3;border-top-color:#dfe1e5}
+.settings-card{background:#fbfbfc;border-color:#dfe1e5}
+.classic-tabs{border-bottom:1px solid #dfe1e5}
+.classic-tab{background:#f7f7f8;border-color:#dfe1e5;color:#656871}
+.classic-tab.active{background:#24252a;border-color:#24252a;color:#fff}
+.classic-summary,.classic-layout>.panel{background:#fbfbfc}
+.classic-total-row{border-bottom-color:#e5e6e9}
+.cut-sheet-card{background:#f0f1f3;border-color:#d9dbe0}
+.cut-sheet-card svg{background:#fbfbfc}
+.model-stage{background:radial-gradient(ellipse at 50% 35%,#f8f8f9 0,#e7e8eb 72%,#d9dbe0 100%);border-color:#d3d5da}
+.model-build-details{background:#fbfbfc;border-color:#dfe1e5}
+.model-build-metrics>div{background:#eff0f2}
+.project-import-box{background:#f2f3f5;border-color:#c9cbd1}
+.project-source-preview{background:#f3f4f6;border-color:#dfe1e5}
+.project-source-image{background:#e5e7ea}
+.empty-state{color:#777b84}
+.text-link{color:#bd2525}
+.nav-item.active{background:linear-gradient(90deg,rgba(198,40,40,.30),rgba(198,40,40,.10));box-shadow:inset 3px 0 #e04444}
+.nav-item.active span{color:#ff7777}
+.sidebar{background:#191a1e;border-right:1px solid #303137}
+.company-chip{background:#25262b;border-color:#383940}
+.sidebar-bottom{border-top-color:#383940}
+@media(max-width:760px){
+ .topbar{background:#222328}
+ .page-content{padding-top:22px}
+ .stat-card,.panel,.table-panel{border-radius:10px}
+}
+@media(prefers-reduced-motion:no-preference){
+ .stat-card,.panel,.table-panel{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+ .stat-card:hover,.panel:hover{border-color:#d0c5c7;box-shadow:0 9px 24px rgba(25,26,31,.07)}
+}
