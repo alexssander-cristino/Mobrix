@@ -17,7 +17,7 @@ module.exports = function registerWorkshopRoutes(app, deps) {
    const labor=Number(p.labor_minutes||0)/60*hourly;
    const paid=Number(p.paid_expenses||0);
    const actual=paid+labor;
-   const cost=paid>0?actual:Number(p.estimated_cost||0)+labor;
+   const cost=paid>0?actual:Number(p.estimated_cost||0);
    const sale=Number(p.sale_price||0);
    return {...p,labor_cost:labor,estimated_total_cost:cost,profit:sale-cost,margin_percent:sale>0?(sale-cost)/sale*100:0};
   });
@@ -27,6 +27,7 @@ module.exports = function registerWorkshopRoutes(app, deps) {
    summary:{activeProjects:active.length,totalSales:sales,estimatedCost:cost,projectedProfit:profit,averageMargin:sales?profit/sales*100:0,lowMarginProjects:active.filter(p=>Number(p.margin_percent)<15).length}});
  }));
  app.patch('/api/settings/hourly-cost',auth,asyncRoute(async(req,res)=>{
+  if(req.user.role!=='admin')return res.status(403).json({error:'Somente administradores podem alterar o custo por hora.'});
   const value=Number(req.body?.hourly_cost);
   if(!Number.isFinite(value)||value<0||value>100000)return res.status(400).json({error:'Informe um custo por hora válido.'});
   const r=await pool.query('UPDATE companies SET hourly_cost=$1 WHERE id=$2 RETURNING hourly_cost',[value,req.user.company_id]);
