@@ -46,7 +46,8 @@
  }
  function formData(form){return Object.fromEntries(new FormData(form).entries())}
  root().addEventListener('click',async e=>{
-  const b=e.target.closest('[data-studio-tab],[data-passport-revoke]');if(!b)return;
+  const b=e.target.closest('[data-studio-tab],[data-passport-revoke],[data-machine-status]');if(!b)return;
+  if(b.dataset.machineStatus){try{await api('/studio/machines/'+b.dataset.machineStatus,{method:'PATCH',body:JSON.stringify({status:b.dataset.status})});toast('Situação atualizada.');await tab('maintenance')}catch(err){toast(err.message,true)}return}
   if(b.dataset.studioTab){try{await tab(b.dataset.studioTab)}catch(err){toast(err.message,true)}return}
   if(b.dataset.passportRevoke&&confirm('Revogar este passaporte?')){try{await api('/studio/passports/'+b.dataset.passportRevoke,{method:'DELETE'});toast('Passaporte revogado.');await tab('passport')}catch(err){toast(err.message,true)}}
  });
