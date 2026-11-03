@@ -75,7 +75,7 @@ async function auth(req, res, next) {
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
-  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens'];
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity'];
   const result = await pool.query(
     'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
     ['public', requiredTables]
@@ -472,6 +472,7 @@ app.patch('/api/orders/:id/stage', auth, asyncRoute(async(req,res)=>{
 
 
 require('./advanced-routes')(app, { pool, auth, asyncRoute });
+require('./innovation-routes')(app, { pool, auth, asyncRoute });
 
 app.use((err, _req, res, _next) => {
   console.error('[MADEVIX API]', err);
