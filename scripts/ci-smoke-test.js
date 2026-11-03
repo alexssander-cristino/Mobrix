@@ -158,6 +158,80 @@ async function main() {
     assert.ok(!('description' in portalData.project), 'Portal público não deve expor descrição interna.');
     await expectStatus(await request('/portal/links', { token: registered.token }), 200, 'Listagem de acessos do portal');
 
+
+    // Intelligent Factory: 12 new capabilities and company scoping.
+    const autopilot = await expectStatus(await request('/intelligent/autopilot', { token: registered.token }), 200, 'Mobrix Autopilot');
+    assert.ok(Array.isArray(autopilot.actions), 'Autopilot deve retornar recomendações.');
+    const machine = await expectStatus(await request('/studio/machines', {
+      token: registered.token, method: 'POST',
+      body: { name: 'Seccionadora CI', code: 'SEC-CI', area: 'Corte', maintenance_interval_hours: 500, operating_hours: 470 }
+    }), 201, 'Cadastro de máquina para IoT');
+    const reverse = await expectStatus(await request('/intelligent/reverse-engineering', {
+      token: registered.token, method: 'POST',
+      body: { title: 'Armário referência CI', image_url: 'https://example.com/cabinet.jpg', project_id: project.id, width_mm: 800, height_mm: 720, depth_mm: 550 }
+    }), 201, 'Engenharia reversa assistida');
+    await expectStatus(await request('/intelligent/reverse-engineering/'+reverse.id, {
+      token: registered.token, method: 'PATCH', body: { status: 'approved' }
+    }), 200, 'Aprovação da referência');
+    const cnc = await expectStatus(await request('/intelligent/cnc/export', {
+      token: registered.token, method: 'POST', body: { project_id: project.id, machine_profile: 'CSV CI' }
+    }), 201, 'Exportação CNC CSV');
+    assert.ok(cnc.csv.includes('Comprimento_mm'), 'CSV CNC deve incluir dimensões.');
+    await expectStatus(await request('/intelligent/vision', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, title: 'Inspeção fotográfica CI', photo_url: 'https://example.com/part.jpg',
+        checklist: [{ item: 'Medidas conferidas', passed: true }], annotations: [{ label: 'Borda', x: 10, y: 20 }] }
+    }), 201, 'Registro Mobrix Vision');
+    const showroom = await expectStatus(await request('/intelligent/showroom', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, title: 'Showroom CI', model_url: 'https://example.com/model.glb', config: { accent: '#aa2222' } }
+    }), 201, 'Criação do showroom');
+    const showroomToken = showroom.share_url.split('/').pop();
+    await expectStatus(await request('/intelligent/showroom/public/'+showroomToken), 200, 'Acesso público ao showroom');
+    const simulation = await expectStatus(await request('/intelligent/simulations', {
+      token: registered.token, method: 'POST', body: { title: 'Cenário CI', daily_hours: 8, minutes_per_order: 120, working_days: 5 }
+    }), 201, 'Simulador de fábrica');
+    assert.ok(simulation.estimated_hours >= 0, 'Simulação deve calcular horas.');
+    const scan = await expectStatus(await request('/intelligent/inventory-scans', {
+      token: registered.token, method: 'POST',
+      body: { photo_url: 'https://example.com/stock.jpg', items: [{ material_id: material.id, quantity: 2 }] }
+    }), 201, 'Conferência de estoque por imagem');
+    await expectStatus(await request('/intelligent/inventory-scans/'+scan.id+'/confirm', {
+      token: registered.token, method: 'POST', body: {}
+    }), 200, 'Confirmação da entrada por conferência');
+    const guide = await expectStatus(await request('/intelligent/assembly', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, title: 'Montagem CI', steps: [{ title: 'Separar peças' }, { title: 'Instalar ferragens' }] }
+    }), 201, 'Guia de montagem');
+    await expectStatus(await request('/intelligent/assembly/'+guide.id+'/steps', {
+      token: registered.token, method: 'PATCH', body: { steps: guide.steps.map((step, i) => ({ ...step, done: i === 0 })) }
+    }), 200, 'Atualização do progresso da montagem');
+    const predictive = await expectStatus(await request('/intelligent/predictive?days=30', { token: registered.token }), 200, 'Mobrix Predict');
+    assert.ok(Array.isArray(predictive.materials), 'Previsão deve listar materiais.');
+    const device = await expectStatus(await request('/intelligent/iot/devices', {
+      token: registered.token, method: 'POST', body: { machine_id: machine.id, name: 'Sensor CI' }
+    }), 201, 'Provisionamento IoT');
+    const telemetryResponse = await fetch(base+'/intelligent/iot/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Mobrix-Device-Token': device.device_token },
+      body: JSON.stringify({ temperature_c: 31.5, vibration_mm_s: 1.2, power_kw: 2.1, runtime_hours: 471, state: 'operacional' })
+    });
+    assert.equal(telemetryResponse.status, 201, 'Ingestão IoT deve aceitar token válido.');
+    await expectStatus(await request('/intelligent/iot/telemetry', { token: registered.token }), 200, 'Consulta de telemetria');
+    await expectStatus(await request('/intelligent/collaboration/'+project.id, {
+      token: registered.token, method: 'POST', body: { content: 'Projeto revisado pela equipe.' }
+    }), 201, 'Comentário colaborativo');
+    await expectStatus(await request('/intelligent/collaboration/'+project.id, { token: registered.token }), 200, 'Histórico colaborativo');
+    await expectStatus(await request('/intelligent/history/'+project.id, {
+      token: registered.token, method: 'POST', body: { event_type: 'maintenance', title: 'Ajuste de ferragens', details: { operator: 'Equipe CI' }, is_public: true }
+    }), 201, 'Histórico vitalício');
+    const passport = await expectStatus(await request('/studio/passports', {
+      token: registered.token, method: 'POST', body: { project_id: project.id }
+    }), 201, 'Passaporte para histórico público');
+    const passportToken = passport.url.split('/').pop();
+    const publicHistory = await expectStatus(await request('/intelligent/history/public/'+passportToken), 200, 'Histórico público do produto');
+    assert.ok(publicHistory.some(event => event.title === 'Ajuste de ferragens'), 'Evento público deve aparecer no passaporte.');
+
     const second = await expectStatus(await request('/auth/register', {
       method: 'POST',
       body: { company: 'Outra empresa CI', name: 'Outro admin', email: `other-${Date.now()}@madevix.test`, password: 'Senha-forte-123' }
