@@ -60,8 +60,8 @@ BEGIN
 END; $$ LANGUAGE plpgsql;
 DO $$ DECLARE t TEXT; BEGIN
  FOREACH t IN ARRAY ARRAY['project_measurements','project_cost_items','production_trace_labels','project_approvals','cnc_exports'] LOOP
-  EXECUTE format('DROP TRIGGER IF EXISTS trg_%I_company ON %I',t,t);
-  EXECUTE format('CREATE TRIGGER trg_%I_company BEFORE INSERT OR UPDATE OF company_id,project_id ON %I FOR EACH ROW EXECUTE FUNCTION mobrix_assert_innovation_company()',t,t);
+  EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I','trg_'||t||'_company',t);
+  EXECUTE format('CREATE TRIGGER %I BEFORE INSERT OR UPDATE OF company_id,project_id ON %I FOR EACH ROW EXECUTE FUNCTION mobrix_assert_innovation_company()','trg_'||t||'_company',t);
  END LOOP;
 END $$;
 CREATE OR REPLACE FUNCTION mobrix_assert_trace_part_company() RETURNS trigger AS $$
