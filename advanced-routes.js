@@ -55,6 +55,7 @@ module.exports = function registerWorkshopRoutes(app, deps) {
   const result=['aprovado','reprovado','pendente'].includes(b.result)?b.result:'pendente';
   const checklist=Array.isArray(b.checklist)?b.checklist.slice(0,40).map(x=>({item:String(x.item||'').slice(0,120),ok:Boolean(x.ok)})):[];
   if(!projectId||!stage||!checklist.length)return res.status(400).json({error:'Informe projeto, etapa e ao menos um item de inspeção.'});
+  if(result==='aprovado'&&checklist.some(item=>!item.ok))return res.status(400).json({error:'Não é possível aprovar uma inspeção com itens pendentes.'});
   const p=await pool.query('SELECT id FROM projects WHERE id=$1 AND company_id=$2',[projectId,company]);
   if(!p.rowCount)return res.status(404).json({error:'Projeto não encontrado.'});
   const orderId=b.order_id||null;
