@@ -127,12 +127,52 @@ async function main() {
       await expectStatus(await request(path, { token: registered.token }), 200, `Leitura ${path}`);
     }
 
+    await expectStatus(await request('/production/factory', { token: registered.token }), 200, 'Painel da fábrica');
+    await expectStatus(await request('/production/planning', { token: registered.token }), 200, 'Planejamento inteligente');
+    await expectStatus(await request('/intelligence/overview', { token: registered.token }), 200, 'Mobrix Intelligence');
+    await expectStatus(await request('/settings/hourly-cost', {
+      token: registered.token, method: 'PATCH', body: { hourly_cost: 42.5 }
+    }), 200, 'Custo interno por hora');
+
+    const inspection = await expectStatus(await request('/quality/checks', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, order_id: order.id, stage: 'Corte', result: 'aprovado',
+        checklist: [{ item: 'Medidas conferidas', ok: true }, { item: 'Corte sem lascas', ok: true }] }
+    }), 201, 'Inspeção de qualidade');
+    assert.equal(inspection.checklist.length, 2, 'Checklist de qualidade não foi persistido.');
+    const incompleteInspection = await request('/quality/checks', {
+      token: registered.token, method: 'POST',
+      body: { project_id: project.id, order_id: order.id, stage: 'Montagem', result: 'aprovado',
+        checklist: [{ item: 'Ferragens conferidas', ok: false }] }
+    });
+    assert.equal(incompleteInspection.status, 400, 'Inspeção incompleta não deveria ser aprovada.');
+
+    await expectStatus(await request('/quality/checks', { token: registered.token }), 200, 'Histórico de qualidade');
+
+    const portal = await expectStatus(await request('/projects/'+project.id+'/portal', {
+      token: registered.token, method: 'POST', body: {}
+    }), 201, 'Criação do portal do cliente');
+    assert.ok(portal.url && portal.id, 'Portal não retornou link e identificador.');
+    const portalToken = new URL(portal.url).pathname.split('/').pop();
+    const portalData = await expectStatus(await request('/portal/'+portalToken), 200, 'Acesso público do portal');
+    assert.ok(!('description' in portalData.project), 'Portal público não deve expor descrição interna.');
+    await expectStatus(await request('/portal/links', { token: registered.token }), 200, 'Listagem de acessos do portal');
+
     const second = await expectStatus(await request('/auth/register', {
       method: 'POST',
       body: { company: 'Outra empresa CI', name: 'Outro admin', email: `other-${Date.now()}@madevix.test`, password: 'Senha-forte-123' }
     }), 201, 'Cadastro de segunda empresa');
     const isolated = await expectStatus(await request('/customers', { token: second.token }), 200, 'Isolamento entre empresas');
     assert.equal(isolated.length, 0, 'Uma empresa conseguiu visualizar dados de outra empresa.');
+
+    await expectStatus(await request('/portal/links', { token: second.token }), 200, 'Isolamento de links do portal');
+    await expectStatus(await request('/portal/links/'+portal.id, {
+      token: second.token, method: 'DELETE'
+    }), 404, 'Bloqueio de revogação entre empresas');
+    await expectStatus(await request('/portal/links/'+portal.id, {
+      token: registered.token, method: 'DELETE'
+    }), 200, 'Revogação de acesso do portal');
+    await expectStatus(await request('/portal/'+portalToken), 404, 'Link revogado');
 
     const badPayload = await request('/auth/register', { method: 'POST', body: { company: 123, name: null, email: 'x', password: '123' } });
     assert.equal(badPayload.status, 400, 'Payload inválido deveria retornar HTTP 400.');
