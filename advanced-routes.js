@@ -10,7 +10,7 @@ module.exports = function registerWorkshopRoutes(app, deps) {
    pool.query('SELECT COUNT(*) FILTER(WHERE quantity<=minimum_quantity)::int AS low_stock,COUNT(*)::int AS materials FROM materials WHERE company_id=$1',[company]),
    pool.query("SELECT supplier,COUNT(*)::int AS materials,AVG(unit_cost)::numeric AS average_cost FROM materials WHERE company_id=$1 AND NULLIF(BTRIM(supplier),'') IS NOT NULL GROUP BY supplier ORDER BY AVG(unit_cost),COUNT(*) DESC LIMIT 8",[company]),
    pool.query("SELECT COUNT(*)::int AS total FROM production_orders WHERE company_id=$1 AND stage NOT IN ('concluido','cancelado') AND due_date<CURRENT_DATE",[company]),
-   pool.query('SELECT COALESCE(SUM(duration_minutes),0)::int AS minutes,COUNT(*)::int AS entries FROM time_entries WHERE company_id=$1 AND started_at>=date_trunc(\\'month\\',CURRENT_DATE)',[company])
+   pool.query("SELECT COALESCE(SUM(duration_minutes),0)::int AS minutes,COUNT(*)::int AS entries FROM time_entries WHERE company_id=$1 AND started_at>=date_trunc('month',CURRENT_DATE)",[company])
   ]);
   const hourly=Number(q[0].rows[0].hourly_cost||0);
   const projects=q[1].rows.map(p=>{
@@ -73,7 +73,8 @@ module.exports = function registerWorkshopRoutes(app, deps) {
   const token=crypto.randomBytes(32).toString('base64url'),hash=crypto.createHash('sha256').update(token).digest('hex');
   const expires=new Date(Date.now()+30*24*60*60*1000);
   const saved=await pool.query('INSERT INTO project_portal_tokens(company_id,project_id,token_hash,expires_at,created_by) VALUES($1,$2,$3,$4,$5) RETURNING id,expires_at',[company,id,hash,expires,req.user.id]);
-  const base=(process.env.PUBLIC_URL||req.protocol+'://'+req.get('host')).replace(/\\/$/,'');
+  const rawBase=process.env.PUBLIC_URL||req.protocol+'://'+req.get('host');
+  const base=rawBase.endsWith('/')?rawBase.slice(0,-1):rawBase;
   res.status(201).json({...saved.rows[0],url:base+'/cliente/'+token});
  }));
  app.delete('/api/portal/links/:id',auth,asyncRoute(async(req,res)=>{
@@ -85,9 +86,9 @@ module.exports = function registerWorkshopRoutes(app, deps) {
   const token=String(req.params.token||'');
   if(token.length<30||token.length>100)return res.status(404).json({error:'Link inválido.'});
   const hash=crypto.createHash('sha256').update(token).digest('hex');
-  const r=await pool.query('SELECT p.title,p.description,p.status,p.deadline,c.name AS company_name FROM project_portal_tokens t JOIN projects p ON p.id=t.project_id AND p.company_id=t.company_id JOIN companies c ON c.id=t.company_id WHERE t.token_hash=$1 AND t.revoked_at IS NULL AND t.expires_at>NOW()',[hash]);
+  const r=await pool.query('SELECT p.title,p.status,p.deadline,c.name AS company_name FROM project_portal_tokens t JOIN projects p ON p.id=t.project_id AND p.company_id=t.company_id JOIN companies c ON c.id=t.company_id WHERE t.token_hash=$1 AND t.revoked_at IS NULL AND t.expires_at>NOW()',[hash]);
   if(!r.rowCount)return res.status(404).json({error:'Este link expirou ou não está mais disponível.'});
-  const timeline=await pool.query('SELECT l.to_stage,l.notes,l.created_at FROM project_portal_tokens t JOIN production_orders o ON o.project_id=t.project_id AND o.company_id=t.company_id JOIN production_stage_logs l ON l.order_id=o.id AND l.company_id=o.company_id WHERE t.token_hash=$1 ORDER BY l.created_at DESC LIMIT 30',[hash]);
+  const timeline=await pool.query('SELECT l.to_stage,l.created_at FROM project_portal_tokens t JOIN production_orders o ON o.project_id=t.project_id AND o.company_id=t.company_id JOIN production_stage_logs l ON l.order_id=o.id AND l.company_id=o.company_id WHERE t.token_hash=$1 ORDER BY l.created_at DESC LIMIT 30',[hash]);
   res.set('Cache-Control','no-store');
   res.json({project:r.rows[0],timeline:timeline.rows});
  }));
