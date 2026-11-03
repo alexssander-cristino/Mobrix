@@ -272,7 +272,7 @@ app.delete('/api/engineering/parts/:id', auth, asyncRoute(async (req,res)=>{
 
 
 app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
- const projectId=String(req.query.project_id||''),company=req.user.company_id;
+ const projectId=String(req.query.project_id||''),company=req.user.company_id,kerf=Math.min(10,Math.max(0,Number(req.query.kerf_mm??3)||0));
  if(!projectId)return res.status(400).json({error:'Selecione um projeto.'});
  const [project,parts,materials,offcuts]=await Promise.all([
   pool.query('SELECT id,title FROM projects WHERE id=$1 AND company_id=$2',[projectId,company]),
@@ -292,14 +292,14 @@ app.get('/api/purchasing/plan',auth,asyncRoute(async(req,res)=>{
   const used=[],missing=[];
   for(const p of pieces){let best=null;for(const s of sources)for(let i=0;i<s.free.length;i++){const f=s.free[i],normal=p.l<=f.w&&p.w<=f.h,rot=p.grain==='livre'&&p.w<=f.w&&p.l<=f.h;if(normal||rot){const waste=f.w*f.h-p.l*p.w;if(!best||waste<best.waste)best={s,i,f,rot,waste}}}
    if(!best){missing.push(p);continue}
-   const {s,i,f,rot}=best,w=rot?p.w:p.l,h=rot?p.l:p.w;s.free.splice(i,1);if(f.w-w>0&&h>0)s.free.push({w:f.w-w,h});if(f.h-h>0&&f.w>0)s.free.push({w:f.w,h:f.h-h});used.push({piece:p.name,dimensions:p.l+' × '+p.w+' mm',source:s.label,kind:s.kind});
+   const {s,i,f,rot}=best,w=rot?p.w:p.l,h=rot?p.l:p.w;s.free.splice(i,1);const remainingWidth=f.w-w-kerf,remainingHeight=f.h-h-kerf;if(remainingWidth>0&&h>0)s.free.push({w:remainingWidth,h});if(remainingHeight>0&&f.w>0)s.free.push({w:f.w,h:remainingHeight});used.push({piece:p.name,dimensions:p.l+' × '+p.w+' mm',source:s.label,kind:s.kind,kerf_mm:kerf});
   }
   const sourceNames=[...new Set(used.map(x=>x.source))],usedOffcuts=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='retalho')).length,usedSheets=sourceNames.filter(n=>sources.some(s=>s.label===n&&s.kind==='chapa')).length;
   const area=missing.reduce((n,p)=>n+p.l*p.w,0),sheetArea=sl*sw,sheetConfigured=!!sheetArea&&Math.abs((+m.sheet_thickness_mm||0)-pieces[0].t)<0.01&&String(m.unit).toLowerCase().includes('chap'),sheets=sheetConfigured?Math.ceil(area/sheetArea):null;
   output.push({material_id:id,material:m.name,required:pieces.length,allocated:used.length,missing:missing.length,usedOffcuts,usedSheets,purchaseSheets:sheetArea?sheets:null,estimatedPurchase:sheetArea?sheets*(+m.unit_cost||0):null,sheetConfigured,sheet:sheetConfigured?sl+' × '+sw+' × '+m.sheet_thickness_mm+' mm':'Dimensões/espessura não configuradas',assigned:used,unallocated:missing.map(p=>({name:p.name,dimensions:p.l+' × '+p.w+' mm'}))});
  }
  const unlinked=parts.rows.filter(p=>!p.material_id).map(p=>p.name);
- res.json({project:project.rows[0],materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+(x.purchaseSheets||0),0),estimatedPurchase:output.reduce((n,x)=>n+(x.estimatedPurchase||0),0)}});
+ res.json({project:project.rows[0],kerfMm:kerf,materials:output,unlinkedParts:unlinked,summary:{pieces:output.reduce((n,x)=>n+x.required,0),allocated:output.reduce((n,x)=>n+x.allocated,0),missing:output.reduce((n,x)=>n+x.missing,0),purchaseSheets:output.reduce((n,x)=>n+(x.purchaseSheets||0),0),estimatedPurchase:output.reduce((n,x)=>n+(x.estimatedPurchase||0),0)}});
 }));
 
 
