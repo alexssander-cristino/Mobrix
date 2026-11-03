@@ -34,7 +34,7 @@ module.exports=function registerAdvancedStudioRoutes(app,{pool,auth,asyncRoute})
   const client=await pool.connect();try{await client.query('BEGIN');const m=await client.query('SELECT * FROM studio_machines WHERE id=$1 AND company_id=$2 FOR UPDATE',[req.params.id,company(req)]);if(!m.rowCount){await client.query('ROLLBACK');return fail(res,'Máquina não encontrada.',404)}
    const log=await client.query('INSERT INTO studio_machine_logs(company_id,machine_id,kind,description,hours,logged_at,created_by) VALUES($1,$2,$3,$4,$5,COALESCE($6::date,CURRENT_DATE),$7) RETURNING *',[company(req),req.params.id,kind,description,hours,b.logged_at||null,req.user.id]);
    const newHours=Number(m.rows[0].operating_hours)+(kind==='uso'?hours:0);
-   await client.query('UPDATE studio_machines SET operating_hours=$1,status=CASE WHEN $2=\'manutencao\' THEN \'manutencao\' WHEN $2=\'parada\' THEN \'parada\' ELSE status END,last_service_at=CASE WHEN $2=\'manutencao\' THEN CURRENT_DATE ELSE last_service_at END WHERE id=$3',[kind==='manutencao'?newHours-(newHours%Number(m.rows[0].maintenance_interval_hours)):newHours,kind,req.params.id]);
+   await client.query('UPDATE studio_machines SET operating_hours=$1,status=CASE WHEN $2=\'manutencao\' THEN \'manutencao\' WHEN $2=\'parada\' THEN \'parada\' ELSE status END,last_service_at=CASE WHEN $2=\'manutencao\' THEN CURRENT_DATE ELSE last_service_at END WHERE id=$3',[newHours,kind,req.params.id]);
    await client.query('COMMIT');res.status(201).json(log.rows[0]);
   }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
  }));
