@@ -1,6 +1,6 @@
-# MADEVIX
+# MOBRIX
 
-ERP industrial para marcenarias. Gestão de projetos, produção, clientes, materiais e financeiro em um único ambiente.
+ERP industrial para marcenarias. Gestão de projetos, engenharia, produção, suprimentos, qualidade e relacionamento com clientes em um único ambiente.
 
 ## Stack
 
@@ -27,7 +27,7 @@ ERP industrial para marcenarias. Gestão de projetos, produção, clientes, mate
 - Movimentações de estoque com validação transacional
 - Lançamentos de receitas e despesas
 - Ferramentas originais de orçamento, precificação, prazo, plano de corte e visualização 3D preservadas em `public/ferramentas-legadas.html` (ainda com armazenamento local, até a migração específica desses módulos para PostgreSQL).
-- Interface responsiva
+- Otimizador de chapas e retalhos com perda de serra configurável (kerf), sentido do veio e estimativa de compra\n- Painel de fábrica em colunas por etapa, com atualização de ordens e fila de produção priorizada por urgência e prazo\n- Mobrix Intelligence: resultado e margem estimada por projeto, custo interno por hora, alertas operacionais e comparação dos fornecedores cadastrados\n- Controle de qualidade por etapa, com checklist e histórico de inspeções\n- Portal do cliente com link individual e QR Code, validade de 30 dias e revogação; token aleatório armazenado somente como hash\n- Interface responsiva
 
 ## Executar localmente
 
@@ -63,7 +63,7 @@ A aplicação ficará disponível em `http://localhost:3000`.
 - `GET|POST|PATCH /api/offcuts`
 - `GET|POST /api/time-entries`
 - `GET /api/production/metrics`
-- `PATCH /api/orders/:id/stage`
+- `PATCH /api/orders/:id/stage`\n- `GET /api/production/factory` e `GET /api/production/planning`\n- `GET /api/intelligence/overview`\n- `GET|POST /api/quality/checks`\n- `GET /api/portal/links`, `POST /api/projects/:id/portal` e `DELETE /api/portal/links/:id`\n- `GET /api/portal/:token` (acesso público somente leitura)
 
 Rotas de dados exigem `Authorization: Bearer <token>`.
 
