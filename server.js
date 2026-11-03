@@ -75,7 +75,7 @@ async function auth(req, res, next) {
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
-  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations'];
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens'];
   const result = await pool.query(
     'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
     ['public', requiredTables]
