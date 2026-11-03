@@ -91,6 +91,7 @@ module.exports = function registerWorkshopRoutes(app, deps) {
   if(!r.rowCount)return res.status(404).json({error:'Este link expirou ou não está mais disponível.'});
   const timeline=await pool.query('SELECT l.to_stage,l.created_at FROM project_portal_tokens t JOIN production_orders o ON o.project_id=t.project_id AND o.company_id=t.company_id JOIN production_stage_logs l ON l.order_id=o.id AND l.company_id=o.company_id WHERE t.token_hash=$1 ORDER BY l.created_at DESC LIMIT 30',[hash]);
   res.set('Cache-Control','no-store');
+  res.set('Referrer-Policy','no-referrer');
   res.json({project:r.rows[0],timeline:timeline.rows});
  }));
  app.get('/cliente/:token',(req,res)=>res.sendFile(path.join(__dirname,'public','portal.html')));
