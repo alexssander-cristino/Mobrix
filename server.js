@@ -130,8 +130,43 @@ app.post('/api/auth/login', asyncRoute(async (req, res) => {
 }));
 
 app.get('/api/me', auth, asyncRoute(async (req, res) => {
-  const c = await pool.query('SELECT name FROM companies WHERE id=$1', [req.user.company_id]);
+  const c = await pool.query('SELECT name, document, phone, email FROM companies WHERE id=$1', [req.user.company_id]);
   res.json({ user: req.user, company: c.rows[0] || null });
+}));
+
+app.patch('/api/settings/company', auth, asyncRoute(async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Somente administradores podem alterar os dados da empresa.' });
+  const name = String(req.body?.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Informe o nome da empresa.' });
+  const document = String(req.body?.document || '').trim() || null;
+  const phone = String(req.body?.phone || '').trim() || null;
+  const email = String(req.body?.email || '').trim().toLowerCase() || null;
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail comercial válido.' });
+  const result = await pool.query('UPDATE companies SET name=$1, document=$2, phone=$3, email=$4 WHERE id=$5 RETURNING name, document, phone, email', [name, document, phone, email, req.user.company_id]);
+  if (!result.rowCount) return res.status(404).json({ error: 'Empresa não encontrada.' });
+  res.json(result.rows[0]);
+}));
+
+app.patch('/api/settings/profile', auth, asyncRoute(async (req, res) => {
+  const name = String(req.body?.name || '').trim();
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!name || !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Informe nome e e-mail válidos.' });
+  const duplicate = await pool.query('SELECT id FROM users WHERE company_id=$1 AND email=$2 AND id<>$3', [req.user.company_id, email, req.user.id]);
+  if (duplicate.rowCount) return res.status(409).json({ error: 'Este e-mail já está em uso nesta empresa.' });
+  const result = await pool.query('UPDATE users SET name=$1,email=$2 WHERE id=$3 AND company_id=$4 RETURNING id,company_id,name,email,role', [name,email,req.user.id,req.user.company_id]);
+  if (!result.rowCount) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  res.json(result.rows[0]);
+}));
+
+app.post('/api/settings/password', auth, asyncRoute(async (req, res) => {
+  const current = String(req.body?.current_password || '');
+  const next = String(req.body?.new_password || '');
+  if (!current || next.length < 8) return res.status(400).json({ error: 'Informe a senha atual e uma nova senha com pelo menos 8 caracteres.' });
+  const result = await pool.query('SELECT password_hash FROM users WHERE id=$1 AND company_id=$2 AND active=TRUE', [req.user.id,req.user.company_id]);
+  if (!result.rowCount || !(await bcrypt.compare(current,result.rows[0].password_hash))) return res.status(400).json({ error: 'A senha atual está incorreta.' });
+  const hash = await bcrypt.hash(next,12);
+  await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2 AND company_id=$3', [hash,req.user.id,req.user.company_id]);
+  res.json({ ok: true });
 }));
 
 app.get('/api/dashboard', auth, asyncRoute(async (req, res) => {
