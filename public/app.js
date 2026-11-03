@@ -430,6 +430,7 @@ function renderSettings(){
    <div class="settings-security-foot"><span class="settings-security-dot"></span><div><strong>Isolamento por empresa ativo</strong><small>As consultas e alterações da API são vinculadas à empresa autenticada.</small></div></div>
   </section>
  </div>`;
+ if(user.role!=='admin')$('#settings-company-form')?.querySelectorAll('input,button').forEach(el=>{el.disabled=true});
  const tabs=[...$('#page-content').querySelectorAll('[data-settings-tab]')],panels=[...$('#page-content').querySelectorAll('[data-settings-panel]')];
  tabs.forEach(tab=>tab.addEventListener('click',()=>{tabs.forEach(x=>x.classList.toggle('active',x===tab));panels.forEach(x=>x.classList.toggle('active',x.dataset.settingsPanel===tab.dataset.settingsTab))}));
  $('#settings-company-form')?.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const payload=Object.fromEntries(new FormData(e.currentTarget));state.company=await api('/settings/company',{method:'PATCH',body:JSON.stringify(payload)});$('#company-name').textContent=state.company.name;toast('Dados da empresa atualizados.');renderSettings()}catch(err){toast(err.message,true)}finally{button.disabled=false}});
