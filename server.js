@@ -141,7 +141,7 @@ app.patch('/api/settings/company', auth, asyncRoute(async (req, res) => {
   const document = String(req.body?.document || '').trim() || null;
   const phone = String(req.body?.phone || '').trim() || null;
   const email = String(req.body?.email || '').trim().toLowerCase() || null;
-  if (email && !/^\\S+@\\S+\\.\\S+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail comercial válido.' });
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Informe um e-mail comercial válido.' });
   const result = await pool.query('UPDATE companies SET name=$1, document=$2, phone=$3, email=$4 WHERE id=$5 RETURNING name, document, phone, email', [name, document, phone, email, req.user.company_id]);
   if (!result.rowCount) return res.status(404).json({ error: 'Empresa não encontrada.' });
   res.json(result.rows[0]);
@@ -150,7 +150,7 @@ app.patch('/api/settings/company', auth, asyncRoute(async (req, res) => {
 app.patch('/api/settings/profile', auth, asyncRoute(async (req, res) => {
   const name = String(req.body?.name || '').trim();
   const email = String(req.body?.email || '').trim().toLowerCase();
-  if (!name || !/^\\S+@\\S+\\.\\S+$/.test(email)) return res.status(400).json({ error: 'Informe nome e e-mail válidos.' });
+  if (!name || !/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Informe nome e e-mail válidos.' });
   const duplicate = await pool.query('SELECT id FROM users WHERE company_id=$1 AND email=$2 AND id<>$3', [req.user.company_id, email, req.user.id]);
   if (duplicate.rowCount) return res.status(409).json({ error: 'Este e-mail já está em uso nesta empresa.' });
   const result = await pool.query('UPDATE users SET name=$1,email=$2 WHERE id=$3 AND company_id=$4 RETURNING id,company_id,name,email,role', [name,email,req.user.id,req.user.company_id]);
