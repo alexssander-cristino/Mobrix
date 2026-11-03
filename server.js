@@ -75,7 +75,7 @@ async function auth(req, res, next) {
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
-  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity'];
+  const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity','studio_machines','studio_machine_logs','studio_schedule','studio_nesting_runs','studio_supplier_quotes','studio_configurations','studio_inspections','studio_passports'];
   const result = await pool.query(
     'SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name = ANY($2::text[])',
     ['public', requiredTables]
@@ -490,6 +490,7 @@ app.use((err, _req, res, _next) => {
   const message = malformedJson ? 'O corpo da requisição contém JSON inválido.' : (mapped?.[1] || (process.env.NODE_ENV === 'production' ? 'Erro interno do servidor.' : err.message));
   res.status(status).json({ error: message, ...(process.env.NODE_ENV !== 'production' && err.code ? { code: err.code } : {}) });
 });
+app.get('/passaporte/:token', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'passport.html')));
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const port = Number(process.env.PORT || 3000);
