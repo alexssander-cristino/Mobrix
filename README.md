@@ -1,11 +1,11 @@
-# MOBRIX
+# MADEVIX
 
-**ERP industrial para marcenarias.** O Mobrix centraliza gestão comercial, projetos, engenharia, materiais, compras, produção, qualidade, custos, manutenção e relacionamento com clientes em uma única plataforma.
+**ERP industrial para marcenarias.** O Madevix centraliza gestão comercial, projetos, engenharia, materiais, compras, produção, qualidade, custos, manutenção e relacionamento com clientes em uma única plataforma.
 
 O objetivo é conectar o que é vendido ao que é projetado, comprado, fabricado, conferido e entregue — com rastreabilidade por empresa e indicadores para apoiar decisões operacionais.
 
-> Produto: **Mobrix**  
-> Repositório: [alexssander-cristino/Mobrix](https://github.com/alexssander-cristino/Mobrix)  
+> Produto: **Madevix**  
+> Repositório: [alexssander-cristino/Madevix](https://github.com/alexssander-cristino/Madevix)  
 > Branch principal: \`main\`
 
 ---
@@ -35,7 +35,7 @@ O objetivo é conectar o que é vendido ao que é projetado, comprado, fabricado
 
 ## Visão geral
 
-O Mobrix é um sistema web de gestão para empresas de marcenaria e fabricação de móveis sob medida.
+O Madevix é um sistema web de gestão para empresas de marcenaria e fabricação de móveis sob medida.
 
 A plataforma reúne:
 
@@ -99,7 +99,7 @@ A relação abaixo descreve os recursos presentes no código do projeto. Alguns 
 
 Painel gerencial com visão resumida da empresa e atalhos para as áreas de trabalho.
 
-O **Mobrix Command Center** reúne:
+O **Madevix Command Center** reúne:
 
 - Ordens de produção com prazo vencido.
 - Materiais no mínimo ou abaixo do estoque mínimo.
@@ -191,7 +191,7 @@ Os alertas são montados a partir dos registros existentes no sistema. A ausênc
 - Indicadores de produtividade.
 - Utilização do tempo apontado em análises de custo, conforme as informações cadastradas.
 
-### 9. Mobrix Intelligence
+### 9. Madevix Intelligence
 
 Área de análise gerencial com indicadores calculados a partir dos dados da empresa:
 
@@ -206,7 +206,7 @@ Os alertas são montados a partir dos registros existentes no sistema. A ausênc
 
 O custo por hora pode ser alterado por usuário com perfil administrativo. Os valores de rentabilidade dependem da qualidade dos custos, despesas e horas registrados.
 
-### 10. Mobrix Quality
+### 10. Madevix Quality
 
 - Checklists de inspeção por etapa.
 - Associação a projeto e, quando aplicável, ordem de produção.
@@ -229,7 +229,7 @@ O custo por hora pode ser alterado por usuário com perfil administrativo. Os va
 - Atualização do estado do projeto a partir da resposta do cliente.
 - Geração de ordem de produção nos fluxos de aprovação previstos.
 
-### 12. Mobrix Factory Intelligence
+### 12. Madevix Factory Intelligence
 
 Conjunto de ferramentas para controle e análise da fábrica:
 
@@ -242,7 +242,7 @@ Conjunto de ferramentas para controle e análise da fábrica:
 - **Levantamento:** medidas por ambiente, portas, janelas, pontos elétricos e observações.
 - **Copilot operacional:** recomendações determinísticas com base nos dados da empresa.
 
-### 13. Mobrix Advanced Studio
+### 13. Madevix Advanced Studio
 
 - **Digital Twin operacional:** visão consolidada de setores, máquinas, ordens e inspeções.
 - **Nesting:** otimização heurística de peças em chapas, considerando dimensões, perda de serra (kerf) e sentido do veio.
@@ -255,7 +255,7 @@ Conjunto de ferramentas para controle e análise da fábrica:
 - **Fornecedores:** registro e comparação de cotações.
 - **Configurador paramétrico:** cadastro de configurações e estimativa inicial de peças, área e custo.
 
-### 14. Mobrix Intelligent Factory
+### 14. Madevix Intelligent Factory
 
 - **Autopilot:** recomendações operacionais para atrasos, estoque no mínimo, manutenção próxima, ordens sem agenda e telemetria fora dos limites definidos.
 - **Engenharia reversa assistida:** registro de fotos de referência, dimensões e observações para revisão técnica.
@@ -276,7 +276,7 @@ O arquivo \`public/ferramentas-legadas.html\` mantém ferramentas anteriores de 
 
 ## Arquitetura do projeto
 
-O Mobrix utiliza uma aplicação Express que serve o frontend estático e disponibiliza a API REST.
+O Madevix utiliza uma aplicação Express que serve o frontend estático e disponibiliza a API REST.
 
 \`\`\`text
 Navegador
@@ -348,8 +348,8 @@ Para recursos 3D/AR, é necessário um modelo GLB/GLTF acessível por HTTPS e um
 ### 1. Clonar o repositório
 
 \`\`\`bash
-git clone https://github.com/alexssander-cristino/Mobrix.git
-cd Mobrix
+git clone https://github.com/alexssander-cristino/Madevix.git
+cd Madevix
 \`\`\`
 
 ### 2. Instalar dependências
@@ -564,7 +564,7 @@ A API utiliza JSON. Salvo as rotas públicas explicitamente indicadas, os endpoi
 |---|---|---|
 | GET | \`/api/production/factory\` | Visão do chão de fábrica. |
 | GET | \`/api/production/planning\` | Planejamento de produção. |
-| GET | \`/api/intelligence/overview\` | Indicadores do Mobrix Intelligence. |
+| GET | \`/api/intelligence/overview\` | Indicadores do Madevix Intelligence. |
 | PATCH | \`/api/settings/hourly-cost\` | Configura custo interno por hora (admin). |
 | GET / POST | \`/api/quality/checks\` | Inspeções e checklists de qualidade. |
 
@@ -688,15 +688,15 @@ O sistema disponibiliza páginas públicas para transparência e atendimento rel
 
 Os links são exibidos na tela de autenticação. No cadastro, o usuário precisa aceitar os Termos de Uso e confirmar a leitura do Aviso de Privacidade. A versão dos documentos, data/hora, usuário, empresa, endereço IP e user-agent são registrados em `privacy_acceptances`, criada pela migração `008_privacy_compliance.sql`. A migração `009_privacy_requests.sql` cria o recebimento estruturado de solicitações de titulares pela página pública `/solicitacao-dados.html`; os pedidos ficam registrados na tabela `privacy_requests` para tratamento interno pelo responsável.
 
-**Pendências obrigatórias antes de produção:** preencher nos documentos a identificação jurídica do responsável pelo Mobrix, CPF/CNPJ, endereço e canal de privacidade/contato; confirmar os fornecedores e regiões efetivamente utilizados na hospedagem, banco e armazenamento; revisar os prazos de retenção e os contratos com operadores; e validar o conteúdo com assessoria jurídica. Os campos marcados como `[PREENCHER]` não podem permanecer na versão publicada.
+**Pendências obrigatórias antes de produção:** preencher nos documentos a identificação jurídica do responsável pelo Madevix, CPF/CNPJ, endereço e canal de privacidade/contato; confirmar os fornecedores e regiões efetivamente utilizados na hospedagem, banco e armazenamento; revisar os prazos de retenção e os contratos com operadores; e validar o conteúdo com assessoria jurídica. Os campos marcados como `[PREENCHER]` não podem permanecer na versão publicada.
 
-A empresa cliente é, em regra, controladora dos dados pessoais de seus próprios clientes, colaboradores e fornecedores inseridos no sistema. O Mobrix atua como operador dessas informações conforme as instruções e o contrato aplicável, sem prejuízo de atuar como controlador em operações próprias, como cadastro e segurança da conta.
+A empresa cliente é, em regra, controladora dos dados pessoais de seus próprios clientes, colaboradores e fornecedores inseridos no sistema. O Madevix atua como operador dessas informações conforme as instruções e o contrato aplicável, sem prejuízo de atuar como controlador em operações próprias, como cadastro e segurança da conta.
 
 ---
 
 ## Deploy
 
-O Mobrix pode ser hospedado em um serviço que suporte Node.js e tenha conectividade com PostgreSQL.
+O Madevix pode ser hospedado em um serviço que suporte Node.js e tenha conectividade com PostgreSQL.
 
 ### Configurações necessárias
 
@@ -781,7 +781,7 @@ Para evitar interpretações incorretas sobre o que cada ferramenta entrega:
 ## Estrutura de diretórios
 
 \`\`\`text
-Mobrix/
+Madevix/
 ├── .github/
 │   └── workflows/
 │       └── validate.yml
@@ -843,7 +843,7 @@ Um fluxo operacional sugerido para a marcenaria:
 
 ## Identidade do produto
 
-- **Nome:** Mobrix
+- **Nome:** Madevix
 - **Categoria:** ERP e gestão industrial para marcenarias.
 - **Estilo visual:** industrial, minimalista e responsivo.
 - **Paleta principal:** vermelho, grafite e carvão.
@@ -851,4 +851,4 @@ Um fluxo operacional sugerido para a marcenaria:
 
 ---
 
-**Mobrix — gestão, engenharia e produção conectadas.**
+**Madevix — gestão, engenharia e produção conectadas.**
