@@ -106,6 +106,11 @@ app.post('/api/auth/register', asyncRoute(async (req, res) => {
     const c = await client.query('INSERT INTO companies(name) VALUES($1) RETURNING id', [company.trim()]);
     const hash = await bcrypt.hash(password, 12);
     const u = await client.query('INSERT INTO users(company_id,name,email,password_hash,role) VALUES($1,$2,LOWER($3),$4,$5) RETURNING id,company_id,name,email,role', [c.rows[0].id, name.trim(), email.trim(), hash, 'admin']);
+    if (req.body?.terms_accepted !== 'on' || req.body?.privacy_acknowledged !== 'on') {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'É necessário aceitar os Termos de Uso e confirmar a leitura do Aviso de Privacidade.' });
+    }
+    await client.query('INSERT INTO privacy_acceptances(company_id,user_id,terms_version,privacy_version,ip_address,user_agent) VALUES($1,$2,$3,$4,$5,$6)', [c.rows[0].id,u.rows[0].id,'1.0','1.0',req.ip || null,String(req.get('user-agent') || '').slice(0,500) || null]);
     await client.query('COMMIT');
     res.status(201).json({ token: signToken(u.rows[0]), user: u.rows[0] });
   } catch (e) {
