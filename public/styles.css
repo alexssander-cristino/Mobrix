@@ -2411,3 +2411,13 @@ input::placeholder,textarea::placeholder{color:#81838d}
 .sidebar .nav-item:hover [data-nav-icon],.sidebar .nav-item.active [data-nav-icon],.sidebar .sidebar-settings-link:hover [data-nav-icon]{color:#f06464}
 .sidebar .nav-label [data-nav-icon],.sidebar .nav-caption [data-nav-icon]{color:#9aa2b2}
 .sidebar-collapse animated-lucide-chevron-left,.sidebar .icon-button animated-lucide-log-out{display:block;width:17px;height:17px}
+
+/* Sidebar icon visibility + animated Lucide enhancement */
+.sidebar [data-nav-icon]{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:20px;color:inherit;overflow:visible}
+.sidebar [data-nav-icon] .nav-fallback-icon,.sidebar [data-nav-icon] .animated-nav-icon{display:block;width:18px;height:18px;flex:none}
+.sidebar .nav-item .nav-icon{width:19px!important;min-width:19px;text-align:center;font-size:0!important;color:inherit}
+.sidebar .nav-item.active .nav-icon{color:#ff7777}
+.sidebar .nav-item:hover .nav-icon,.sidebar .sidebar-settings-link:hover .nav-icon{color:#ff7777}
+.sidebar .nav-label .nav-icon,.sidebar .nav-caption .nav-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px}
+.sidebar .nav-label .nav-icon svg,.sidebar .nav-caption .nav-icon svg{width:15px;height:15px}
+.sidebar-collapse svg,.sidebar .icon-button svg{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
