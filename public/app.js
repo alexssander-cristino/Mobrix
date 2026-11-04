@@ -143,7 +143,16 @@ const iconPaths={
  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8m-8 4h8"/>',
  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>'
 };
-function renderNavIcons(){document.querySelectorAll('[data-icon]').forEach(node=>{const d=iconPaths[node.dataset.icon];if(d)node.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+d+'</svg>'})}
+function renderNavIcons(){
+ const icons={"building":"building-2","grid":"grid-2x2","home":"house","briefcase":"briefcase-business","dashboard":"layout-dashboard","users":"users","folder":"folder","ruler":"ruler","box":"box","package":"package","file":"file-text","layers":"layers","factory":"factory","chart":"chart-no-axes-column","zap":"zap","check":"shield-check","clock":"clock","wallet":"wallet","settings":"settings"};
+ document.querySelectorAll('[data-nav-icon]').forEach(node=>{
+  const name=icons[node.dataset.navIcon];
+  if(!name)return;
+  const tag='animated-lucide-'+name;
+  if(node.firstElementChild?.localName===tag)return;
+  node.replaceChildren(document.createElement(tag));
+ });
+}
 function handleGlobalSearch(e){
  const q=e.target.value.trim().toLowerCase(),root=$('#global-search-results');if(q.length<2){root.classList.add('hidden');root.innerHTML='';return}
  const pages=Object.entries(configs).flatMap(([page,cfg])=>(state.cache[page]||[]).filter(row=>Object.values(row).some(v=>String(v??'').toLowerCase().includes(q))).slice(0,4).map(row=>({page,title:row.name||row.title||row.description||cfg.title,detail:row.email||row.phone||row.status||row.stage||cfg.title})));
