@@ -686,7 +686,7 @@ O sistema disponibiliza páginas públicas para transparência e atendimento rel
 - `/cookies.html`: Política de Cookies e tecnologias locais de sessão/preferências.
 - `/direitos-dados.html`: orientações para exercício dos direitos dos titulares.
 
-Os links são exibidos na tela de autenticação. No cadastro, o usuário precisa aceitar os Termos de Uso e confirmar a leitura do Aviso de Privacidade. A versão dos documentos, data/hora, usuário, empresa, endereço IP e user-agent são registrados em `privacy_acceptances`, criada pela migração `008_privacy_compliance.sql`.
+Os links são exibidos na tela de autenticação. No cadastro, o usuário precisa aceitar os Termos de Uso e confirmar a leitura do Aviso de Privacidade. A versão dos documentos, data/hora, usuário, empresa, endereço IP e user-agent são registrados em `privacy_acceptances`, criada pela migração `008_privacy_compliance.sql`. A migração `009_privacy_requests.sql` cria o recebimento estruturado de solicitações de titulares pela página pública `/solicitacao-dados.html`; os pedidos ficam registrados na tabela `privacy_requests` para tratamento interno pelo responsável.
 
 **Pendências obrigatórias antes de produção:** preencher nos documentos a identificação jurídica do responsável pelo Mobrix, CPF/CNPJ, endereço e canal de privacidade/contato; confirmar os fornecedores e regiões efetivamente utilizados na hospedagem, banco e armazenamento; revisar os prazos de retenção e os contratos com operadores; e validar o conteúdo com assessoria jurídica. Os campos marcados como `[PREENCHER]` não podem permanecer na versão publicada.
 
