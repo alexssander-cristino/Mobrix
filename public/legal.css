@@ -5,7 +5,7 @@
 .cookie-notice{position:fixed;z-index:1200;left:22px;right:22px;bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:22px;max-width:900px;margin:0 auto;padding:16px 18px;background:#202923;border:1px solid #405247;border-radius:12px;box-shadow:0 14px 44px #0005;color:#f4f7f4}.cookie-notice[hidden]{display:none!important}.cookie-notice-copy{min-width:0}.cookie-notice-copy strong{display:block;margin-bottom:4px;color:#fff;font-size:12px;font-weight:750}.cookie-notice-copy p{margin:0;color:#c2ccc4;font-size:11px;line-height:1.6}.cookie-notice-copy a{color:#b7d6bd;text-decoration:underline;text-underline-offset:3px}.cookie-notice-close{flex:none;border:0;border-radius:8px;padding:10px 16px;background:#dce9de;color:#26372b;font:700 11px inherit;cursor:pointer}.cookie-notice-close:hover{background:#fff}@media(max-width:600px){.cookie-notice{left:12px;right:12px;bottom:12px;align-items:stretch;gap:12px;padding:14px;flex-direction:column}.cookie-notice-close{width:100%}}
 
 
-/* MOBRIX — central de privacidade e consentimento */
+/* MADEVIX — central de privacidade e consentimento */
 .cookie-notice{
   position:fixed;z-index:1200;right:24px;bottom:24px;left:auto;
   display:grid;grid-template-columns:42px minmax(0,1fr);align-items:start;gap:0 14px;
@@ -73,7 +73,7 @@
 @media(prefers-reduced-motion:reduce){.cookie-notice,.cookie-btn,.cookie-toggle,.cookie-toggle:before{animation:none!important;transition:none!important}}
 
 
-/* MOBRIX COOKIE EXPERIENCE — redesigned consent modal */
+/* MADEVIX COOKIE EXPERIENCE — redesigned consent modal */
 #cookie-backdrop.cookie-backdrop{position:fixed!important;inset:0!important;z-index:9998!important;display:grid!important;place-items:center!important;padding:24px!important;background:rgba(7,8,12,.78)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important;opacity:1!important}
 #cookie-backdrop.cookie-backdrop[hidden]{display:none!important}
 body.cookie-modal-open{overflow:hidden!important}
@@ -141,7 +141,7 @@ body.cookie-modal-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){#cookie-notice.cookie-notice{animation:none!important}#cookie-notice .cookie-action,#cookie-notice .cookie-switch:before{transition:none!important}}
 
 
-/* MOBRIX — consentimento: layout editorial compacto */
+/* MADEVIX — consentimento: layout editorial compacto */
 #cookie-backdrop.cookie-backdrop{
   position:fixed!important;inset:0!important;z-index:99999!important;
   display:grid!important;place-items:center!important;padding:24px!important;
@@ -251,7 +251,7 @@ body.cookie-modal-open{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){#cookie-notice.cookie-notice{animation:none!important}#cookie-notice .cookie-action,#cookie-notice .cookie-switch:before{transition:none!important}}
 
 
-/* MOBRIX — aviso de cookies flutuante, discreto e não intrusivo */
+/* MADEVIX — aviso de cookies flutuante, discreto e não intrusivo */
 #cookie-backdrop.cookie-backdrop{
   position:fixed!important;inset:auto 24px 24px auto!important;z-index:99999!important;
   display:block!important;width:min(420px,calc(100vw - 32px))!important;height:auto!important;
