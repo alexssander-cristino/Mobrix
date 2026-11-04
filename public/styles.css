@@ -2197,3 +2197,16 @@ tbody tr:hover{background:#fff8f8}
  .modal-backdrop{backdrop-filter:none}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* Consistência final de navegação e estados de interação */
+.sidebar .nav-item .nav-text,.sidebar .sidebar-settings-link .nav-text{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;
+}
+.sidebar .nav-item{min-width:0}
+.sidebar .nav-item:active,.sidebar .sidebar-settings-link:active{transform:translateY(1px)}
+.btn:disabled,button:disabled{cursor:not-allowed;opacity:.55;transform:none!important;box-shadow:none!important}
+input::placeholder,textarea::placeholder{color:#a1a3aa;opacity:1}
+input:disabled,select:disabled,textarea:disabled{background:#f3f3f5;color:#92949b;cursor:not-allowed}
+@media(hover:hover){
+ .panel:not(.dashboard-grid .panel):hover,.table-panel:hover{border-color:#e1e2e6}
+}
