@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/legal.css">
   <link rel="stylesheet" href="/innovation.css">
   <link rel="stylesheet" href="/advanced-studio.css">
   <link rel="stylesheet" href="/intelligent-factory.css">
@@ -31,11 +32,14 @@
         <label>Seu nome<input name="name" required placeholder="Nome completo"></label>
         <label>E-mail<input name="email" type="email" required placeholder="voce@empresa.com"></label>
         <label>Senha<input name="password" type="password" minlength="8" required placeholder="Mínimo de 8 caracteres"></label>
+        <label class="legal-check"><input name="terms_accepted" type="checkbox" required><span>Li e aceito os <a href="/termos.html" target="_blank" rel="noopener">Termos de Uso</a>.</span></label>
+        <label class="legal-check"><input name="privacy_acknowledged" type="checkbox" required><span>Li o <a href="/privacidade.html" target="_blank" rel="noopener">Aviso de Privacidade</a> e estou ciente de como os dados são tratados.</span></label>
         <button class="btn btn-primary" type="submit">Criar ambiente <span aria-hidden="true">→</span></button>
       </form>
       <p class="auth-switch" id="auth-switch">Ainda não tem acesso? <button type="button" id="show-register">Criar empresa</button></p>
       <p class="auth-error" id="auth-error" role="alert"></p>
     </div>
+    <nav class="legal-auth-links" aria-label="Informações legais"><a href="/privacidade.html">Privacidade</a><a href="/termos.html">Termos de uso</a><a href="/cookies.html">Cookies</a><a href="/direitos-dados.html">Seus dados</a></nav>
     <p class="auth-foot">Precisão na gestão. Liberdade para produzir.</p>
   </section>
 
