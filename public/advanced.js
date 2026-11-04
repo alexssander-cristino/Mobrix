@@ -9,7 +9,7 @@
  window.renderAdvancedPage=async function(page){
   if(page==='intelligence'){
    const d=await api('/intelligence/overview');
-   let h='<section class="dashboard-intro"><div><p class="eyebrow">MOBRIX INTELLIGENCE</p><h2>Decisões com números reais.</h2><p>Rentabilidade, custos de mão de obra, materiais e pontos de atenção.</p></div><button class="btn btn-secondary" data-advanced-refresh>Atualizar</button></section>';
+   let h='<section class="dashboard-intro"><div><p class="eyebrow">MADEVIX INTELLIGENCE</p><h2>Decisões com números reais.</h2><p>Rentabilidade, custos de mão de obra, materiais e pontos de atenção.</p></div><button class="btn btn-secondary" data-advanced-refresh>Atualizar</button></section>';
    h+='<section class="stats-grid advanced-stats">'+[
     ['Projetos ativos',d.summary.activeProjects,'Em orçamento ou execução'],
     ['Venda contratada',money(d.summary.totalSales),'Projetos ainda ativos'],
@@ -51,7 +51,7 @@
    return;
   }
   const pair=await Promise.all([api('/portal/links'),api('/projects')]),links=pair[0],projects=pair[1];
-  let h='<section class="dashboard-intro"><div><p class="eyebrow">MOBRIX CLIENT</p><h2>Seu cliente acompanha sem precisar ligar.</h2><p>Link individual de leitura para acompanhar a produção, com validade de 30 dias e revogação imediata.</p></div></section><section class="panel portal-create"><div class="panel-head"><div><h3>Gerar acesso do cliente</h3><p>O link é exclusivo do projeto.</p></div></div><form id="portal-form" class="portal-form"><label class="field">Projeto<select name="project_id" required><option value="">Selecione</option>'+projects.map(p=>'<option value="'+p.id+'">'+esc(p.title)+'</option>').join('')+'</select></label><button class="btn btn-primary" type="submit">Gerar link e QR Code</button></form><div id="portal-generated" class="portal-generated"></div></section>';
+  let h='<section class="dashboard-intro"><div><p class="eyebrow">MADEVIX CLIENT</p><h2>Seu cliente acompanha sem precisar ligar.</h2><p>Link individual de leitura para acompanhar a produção, com validade de 30 dias e revogação imediata.</p></div></section><section class="panel portal-create"><div class="panel-head"><div><h3>Gerar acesso do cliente</h3><p>O link é exclusivo do projeto.</p></div></div><form id="portal-form" class="portal-form"><label class="field">Projeto<select name="project_id" required><option value="">Selecione</option>'+projects.map(p=>'<option value="'+p.id+'">'+esc(p.title)+'</option>').join('')+'</select></label><button class="btn btn-primary" type="submit">Gerar link e QR Code</button></form><div id="portal-generated" class="portal-generated"></div></section>';
   h+='<section class="panel"><div class="panel-head"><div><h3>Acessos emitidos</h3><p>Links ativos, expirados ou revogados.</p></div></div><div class="table-wrap"><table><thead><tr><th>Projeto</th><th>Criado</th><th>Validade</th><th>Status</th><th></th></tr></thead><tbody>';
   h+=links.length?links.map(l=>{const expired=new Date(l.expires_at)<new Date(),dead=Boolean(l.revoked_at)||expired;return '<tr><td><strong>'+esc(l.project_title)+'</strong></td><td>'+date(l.created_at)+'</td><td>'+date(l.expires_at)+'</td><td><span class="pill '+(dead?'red':'green')+'">'+(l.revoked_at?'Revogado':expired?'Expirado':'Ativo')+'</span></td><td>'+(!dead?'<button class="btn btn-danger" data-revoke-portal="'+l.id+'">Revogar</button>':'')+'</td></tr>'}).join(''):'<tr><td colspan="5" class="table-empty">Nenhum acesso gerado.</td></tr>';
   root().innerHTML=h+'</tbody></table></div></section>';
