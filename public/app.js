@@ -5,10 +5,10 @@ function saveClassic(){ try { localStorage.setItem('mobrix_classic', JSON.string
 const pageMeta = {
   dashboard:['PAINEL DE CONTROLE','Dashboard'],
   factory:['CHÃO DE FÁBRICA','Painel da fábrica'],
-  innovation:['MOBRIX FACTORY INTELLIGENCE','Inteligência da fábrica'],
-  studio:['MOBRIX ADVANCED STUDIO','Advanced Studio'],
-  intelligent:['MOBRIX INTELLIGENT FACTORY','Intelligent Factory'],
-  intelligence:['MOBRIX INTELLIGENCE','Inteligência gerencial'],
+  innovation:['MADEVIX FACTORY INTELLIGENCE','Inteligência da fábrica'],
+  studio:['MADEVIX ADVANCED STUDIO','Advanced Studio'],
+  intelligent:['MADEVIX INTELLIGENT FACTORY','Intelligent Factory'],
+  intelligence:['MADEVIX INTELLIGENCE','Inteligência gerencial'],
   quality:['PADRÃO DE ENTREGA','Controle de qualidade'],
   portal:['RELACIONAMENTO','Portal do cliente'],
   projects:['GESTÃO DE PROJETOS','Projetos e móveis'],
@@ -34,7 +34,7 @@ async function api(url, options={}) {
   return data;
 }
 function toast(message,error=false){const node=document.createElement('div');node.className='toast'+(error?' error':'');node.textContent=message;$('#toast-root').append(node);setTimeout(()=>node.remove(),3400)}
-function showAuth(register=false){$('#auth-screen').classList.remove('hidden');$('#app').classList.add('hidden');$('#login-form').classList.toggle('hidden',register);$('#register-form').classList.toggle('hidden',!register);$('#auth-title').innerHTML=register?'Comece a organizar<br><span>sua produção.</span>':'Sua marcenaria,<br><span>sob controle.</span>';$('#auth-description').textContent=register?'Crie o ambiente da sua empresa no MOBRIX.':'Entre para acompanhar sua operação.';$('#auth-switch').innerHTML=register?'Já possui acesso? <button type="button" id="show-login">Fazer login</button>':'Ainda não tem acesso? <button type="button" id="show-register">Criar empresa</button>';$('#auth-error').textContent=''}
+function showAuth(register=false){$('#auth-screen').classList.remove('hidden');$('#app').classList.add('hidden');$('#login-form').classList.toggle('hidden',register);$('#register-form').classList.toggle('hidden',!register);$('#auth-title').innerHTML=register?'Comece a organizar<br><span>sua produção.</span>':'Sua marcenaria,<br><span>sob controle.</span>';$('#auth-description').textContent=register?'Crie o ambiente da sua empresa no MADEVIX.':'Entre para acompanhar sua operação.';$('#auth-switch').innerHTML=register?'Já possui acesso? <button type="button" id="show-login">Fazer login</button>':'Ainda não tem acesso? <button type="button" id="show-register">Criar empresa</button>';$('#auth-error').textContent=''}
 function showApp(){ $('#auth-screen').classList.add('hidden');$('#app').classList.remove('hidden');$('#user-name').textContent=state.user?.name||'Usuário';$('#user-role').textContent=state.user?.role==='admin'?'Administrador':'Equipe';$('#user-avatar').textContent=(state.user?.name||'M').slice(0,1).toUpperCase();$('#profile-shortcut').textContent=(state.user?.name||'M').slice(0,1).toUpperCase();$('#company-name').textContent=state.company?.name||'Minha empresa';$('#today').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});$('#sidebar').classList.toggle('collapsed',state.sidebarCollapsed);$('#sidebar-collapse').setAttribute('aria-label',state.sidebarCollapsed?'Expandir sidebar':'Recolher sidebar');$('#sidebar-collapse').title=state.sidebarCollapsed?'Expandir menu':'Recolher menu';renderNavIcons();}
 const INACTIVITY_LIMIT=30*60*1000;
 const INACTIVITY_ACTIVITY_KEY='mobrix_last_activity_v1';
@@ -186,7 +186,7 @@ async function renderDashboard(){
 
  <section class="command-center-grid">
   <article class="panel command-priorities">
-   <div class="panel-head"><div><p class="eyebrow">MOBRIX COMMAND CENTER</p><h3>Prioridades da operação</h3><p>Itens que merecem atenção agora, organizados por impacto</p></div><span class="command-count">${priorityItems.length} ${priorityItems.length===1?'item':'itens'}</span></div>
+   <div class="panel-head"><div><p class="eyebrow">MADEVIX COMMAND CENTER</p><h3>Prioridades da operação</h3><p>Itens que merecem atenção agora, organizados por impacto</p></div><span class="command-count">${priorityItems.length} ${priorityItems.length===1?'item':'itens'}</span></div>
    <div class="command-priority-list">${priorityItems.length?priorityItems.map(item=>'<div class="command-priority"><span class="command-priority-dot '+item.level+'"></span><div class="command-priority-copy"><strong>'+esc(item.label)+'</strong><small>'+esc(item.detail)+'</small></div><button type="button" class="text-link" data-page="'+item.page+'">'+esc(item.action)+' →</button></div>').join(''):'<div class="command-empty"><strong>Operação em dia</strong><span>Nenhum alerta prioritário foi identificado com os dados disponíveis.</span></div>'}</div>
   </article>
   <article class="panel command-productivity">
@@ -288,7 +288,7 @@ function drawTable(page,rows){
  const summary=stats.map(x=>'<article class="resource-stat"><span>'+esc(x[0])+'</span><strong>'+esc(x[1])+'</strong></article>').join('');
  const renderRows=list=>list.length?list.map(r=>'<tr>'+cfg.columns.map(c=>'<td data-label="'+esc(c[1])+'">'+(c[0]==='name'?'<strong>'+cellValue(r,c[0])+'</strong>':cellValue(r,c[0]))+'</td>').join('')+(page==='projects'?'<td data-label="Ação"><button class="btn btn-secondary" data-action="open-project" data-id="'+esc(r.id)+'">Abrir gestão</button></td>':page==='orders'?'<td data-label="Ação">'+(r.stage==='concluido'?'<span class="pill green">Finalizada</span>':'<button class="btn btn-secondary" data-action="advance-order" data-id="'+esc(r.id)+'" data-project-id="'+esc(r.project_id||'')+'" data-stage="'+esc(nextStage(r.stage)||'planejamento')+'">Avançar etapa</button>')+'</td>':'')+'</tr>').join(''):'<tr><td colspan="'+(cfg.columns.length+((page==='orders'||page==='projects')?1:0))+'" class="table-empty">Nenhum registro encontrado.</td></tr>';
  const statusOptions=page==='projects'?['orcamento','aprovado','producao','concluido','cancelado']:page==='orders'?['planejamento','corte','usinagem','montagem','acabamento','instalacao','concluido','pausado']:page==='finance'?['receita','despesa']:[];
- $('#page-content').innerHTML='<div class="resource-heading"><div><p class="eyebrow">GESTÃO MOBRIX</p><h2>'+cfg.title+'</h2><p>Consulte, organize e acompanhe os registros da sua empresa.</p></div><button class="btn btn-primary" data-action="new-'+page+'">＋ '+cfg.add+'</button></div><div class="resource-stats">'+summary+'</div><div class="page-toolbar"><div class="toolbar-caption"><strong>Registros</strong><span>'+rows.length+' itens no ambiente</span></div><div class="toolbar-actions"><input class="search-input" id="table-search" placeholder="Buscar registros..." aria-label="Buscar registros"><select class="table-filter" id="table-status-filter" '+(statusOptions.length?'':'hidden')+'><option value="">Todas as situações</option>'+statusOptions.map(x=>'<option value="'+x+'">'+esc(statusLabel(x))+'</option>').join('')+'</select>'+(page==='projects'?'<div class="view-switch"><button class="active" type="button" data-project-view="table">Lista</button><button type="button" data-project-view="board">Kanban</button></div>':'')+'</div></div><div id="resource-results" class="table-panel"><div class="table-wrap"><table><thead><tr>'+cfg.columns.map(c=>'<th>'+c[1]+'</th>').join('')+((page==='orders'||page==='projects')?'<th>Ação</th>':'')+'</tr></thead><tbody id="table-body">'+renderRows(rows)+'</tbody></table></div></div>';
+ $('#page-content').innerHTML='<div class="resource-heading"><div><p class="eyebrow">GESTÃO MADEVIX</p><h2>'+cfg.title+'</h2><p>Consulte, organize e acompanhe os registros da sua empresa.</p></div><button class="btn btn-primary" data-action="new-'+page+'">＋ '+cfg.add+'</button></div><div class="resource-stats">'+summary+'</div><div class="page-toolbar"><div class="toolbar-caption"><strong>Registros</strong><span>'+rows.length+' itens no ambiente</span></div><div class="toolbar-actions"><input class="search-input" id="table-search" placeholder="Buscar registros..." aria-label="Buscar registros"><select class="table-filter" id="table-status-filter" '+(statusOptions.length?'':'hidden')+'><option value="">Todas as situações</option>'+statusOptions.map(x=>'<option value="'+x+'">'+esc(statusLabel(x))+'</option>').join('')+'</select>'+(page==='projects'?'<div class="view-switch"><button class="active" type="button" data-project-view="table">Lista</button><button type="button" data-project-view="board">Kanban</button></div>':'')+'</div></div><div id="resource-results" class="table-panel"><div class="table-wrap"><table><thead><tr>'+cfg.columns.map(c=>'<th>'+c[1]+'</th>').join('')+((page==='orders'||page==='projects')?'<th>Ação</th>':'')+'</tr></thead><tbody id="table-body">'+renderRows(rows)+'</tbody></table></div></div>';
  const filter=()=>{const q=$('#table-search').value.toLowerCase(),status=$('#table-status-filter')?.value||'';const filtered=rows.filter(r=>(!status||(r.status||r.stage||r.transaction_type)===status)&&Object.values(r).some(v=>String(v??'').toLowerCase().includes(q)));$('#table-body').innerHTML=renderRows(filtered);const count=$('#resource-results-count');if(count)count.textContent=filtered.length+' resultados'};
  $('#table-search').addEventListener('input',filter);$('#table-status-filter')?.addEventListener('change',filter);
  if(page==='projects')$('#resource-results').dataset.view='table';
@@ -438,18 +438,18 @@ async function updateClassicModel(){
     const source=importedModelViewer.sourceSizeMm;if(source){$('#model-width').value=Math.round(source.x);$('#model-height').value=Math.round(source.y);$('#model-depth').value=Math.round(source.z)}
    }
    importedModelViewer.resize({width:+$('#model-width').value||cfg.width,height:+$('#model-height').value||cfg.height,depth:+$('#model-depth').value||cfg.depth});
-  }catch(err){model.innerHTML='<div class="empty-state">Não foi possível montar o projeto em 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX DRAWING 3D]',err)}
+  }catch(err){model.innerHTML='<div class="empty-state">Não foi possível montar o projeto em 3D: '+esc(err.message)+'</div>';console.error('[MADEVIX DRAWING 3D]',err)}
   return;
  }
  if(projectImport?.kind==='model'){
   if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}
   if(!model.querySelector('canvas'))model.innerHTML='<div class="furniture-viewer-hint">Modelo 3D importado · arraste para orbitar</div>';
-  try{projectImportModulePromise ||= import('./project-import.js');const mod=await projectImportModulePromise;if(!model.isConnected)return;if(!importedModelViewer){importedModelViewer=await mod.mountImportedModel(model,projectImport.file);const source=importedModelViewer.sourceSizeMm;if(source){$('#model-width').value=Math.round(source.x);$('#model-height').value=Math.round(source.y);$('#model-depth').value=Math.round(source.z)}}importedModelViewer.resize({width:+$('#model-width').value||cfg.width,height:+$('#model-height').value||cfg.height,depth:+$('#model-depth').value||cfg.depth})}catch(err){model.innerHTML='<div class="empty-state">Falha ao abrir modelo 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX IMPORT 3D]',err)}
+  try{projectImportModulePromise ||= import('./project-import.js');const mod=await projectImportModulePromise;if(!model.isConnected)return;if(!importedModelViewer){importedModelViewer=await mod.mountImportedModel(model,projectImport.file);const source=importedModelViewer.sourceSizeMm;if(source){$('#model-width').value=Math.round(source.x);$('#model-height').value=Math.round(source.y);$('#model-depth').value=Math.round(source.z)}}importedModelViewer.resize({width:+$('#model-width').value||cfg.width,height:+$('#model-height').value||cfg.height,depth:+$('#model-depth').value||cfg.depth})}catch(err){model.innerHTML='<div class="empty-state">Falha ao abrir modelo 3D: '+esc(err.message)+'</div>';console.error('[MADEVIX IMPORT 3D]',err)}
   return;
  }
  if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}
  if(!model.querySelector('canvas')){if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}model.innerHTML='<canvas class="furniture-canvas" aria-label="Modelo 3D do móvel. Arraste para girar e use a roda para aproximar."></canvas><div class="furniture-viewer-hint">Arraste para girar · role para aproximar</div><button type="button" class="furniture-reset" data-action="classic-model-reset">Centralizar</button>'}
- try{furnitureModulePromise ||= import('./furniture-3d.js');const mod=await furnitureModulePromise;if(!model.isConnected)return;const canvas=model.querySelector('canvas');if(!furnitureViewer)furnitureViewer=mod.mountFurnitureViewer(canvas);furnitureViewer.update(cfg)}catch(err){model.innerHTML='<div class="empty-state">Não foi possível iniciar o visualizador 3D: '+esc(err.message)+'</div>';console.error('[MOBRIX 3D]',err)}
+ try{furnitureModulePromise ||= import('./furniture-3d.js');const mod=await furnitureModulePromise;if(!model.isConnected)return;const canvas=model.querySelector('canvas');if(!furnitureViewer)furnitureViewer=mod.mountFurnitureViewer(canvas);furnitureViewer.update(cfg)}catch(err){model.innerHTML='<div class="empty-state">Não foi possível iniciar o visualizador 3D: '+esc(err.message)+'</div>';console.error('[MADEVIX 3D]',err)}
 }
 
 function renderImportedBuildDetails(){
@@ -478,7 +478,7 @@ async function importClassicProject(file){
   renderImportedBuildDetails();
   if(details.kind==='model'&&preview&&importedModelViewer?.sourceSizeMm)preview.querySelector('small').textContent='Dimensões detectadas: '+Math.round(importedModelViewer.sourceSizeMm.x)+' × '+Math.round(importedModelViewer.sourceSizeMm.y)+' × '+Math.round(importedModelViewer.sourceSizeMm.z)+' mm. Você pode alterar somente as três medidas acima.';
   toast(details.kind==='model'?'Modelo 3D importado com sucesso.':details.kind==='specified'?'Projeto lido e móvel montado em 3D.':'Projeto carregado. Confira as medidas e o modelo 3D.');
- }catch(err){if(status)status.textContent=err.message;toast(err.message,true);console.error('[MOBRIX PROJECT IMPORT]',err)}
+ }catch(err){if(status)status.textContent=err.message;toast(err.message,true);console.error('[MADEVIX PROJECT IMPORT]',err)}
 }
 
 function confirmAction(message){return readSettingsPrefs().confirmActions?window.confirm(message):true}
@@ -518,7 +518,7 @@ function renderSettings(activeTab='company'){
     <h4>Informações pessoais</h4><div class="settings-form-grid">
      <label class="field">Nome de exibição<input name="name" required maxlength="120" value="${esc(user.name||'')}"></label>
      <label class="field">E-mail de acesso<input name="email" type="email" required maxlength="160" value="${esc(user.email||'')}"></label>
-    </div><div class="settings-form-footer"><span>O e-mail é usado para entrar no MOBRIX.</span><button class="btn btn-primary" type="submit">Atualizar perfil</button></div>
+    </div><div class="settings-form-footer"><span>O e-mail é usado para entrar no MADEVIX.</span><button class="btn btn-primary" type="submit">Atualizar perfil</button></div>
    </form>
    <form id="settings-password-form" class="settings-form glass-panel">
     <h4>Alterar senha</h4><div class="settings-form-grid">
@@ -529,7 +529,7 @@ function renderSettings(activeTab='company'){
    </form>
   </section>
   <section class="settings-section ${activeTab==='preferences'?'active':''}" data-settings-panel="preferences">
-   <div class="settings-section-heading"><div><p class="eyebrow">EXPERIÊNCIA DE USO</p><h3>Preferências do sistema</h3><p>Personalize o comportamento desta instalação do MOBRIX.</p></div><span class="settings-section-icon">UI</span></div>
+   <div class="settings-section-heading"><div><p class="eyebrow">EXPERIÊNCIA DE USO</p><h3>Preferências do sistema</h3><p>Personalize o comportamento desta instalação do MADEVIX.</p></div><span class="settings-section-icon">UI</span></div>
    <form id="settings-preferences-form" class="settings-form glass-panel">
     <div class="settings-preference-row"><div><strong>Densidade da interface</strong><small>Escolha o espaço entre campos, tabelas e cartões.</small></div><select name="density"><option value="comfortable" ${prefs.density==='comfortable'?'selected':''}>Confortável</option><option value="compact" ${prefs.density==='compact'?'selected':''}>Compacta</option></select></div>
     <div class="settings-preference-row"><div><strong>Página inicial</strong><small>Defina qual área será aberta após o login.</small></div><select name="startPage"><option value="dashboard" ${prefs.startPage==='dashboard'?'selected':''}>Dashboard</option><option value="projects" ${prefs.startPage==='projects'?'selected':''}>Projetos</option><option value="orders" ${prefs.startPage==='orders'?'selected':''}>Produção</option><option value="materials" ${prefs.startPage==='materials'?'selected':''}>Estoque</option><option value="finance" ${prefs.startPage==='finance'?'selected':''}>Financeiro</option></select></div>
@@ -577,7 +577,7 @@ function renderSettings(activeTab='company'){
    });
    if(!Object.keys(data).length)throw new Error('Nenhum dado pôde ser consultado. Verifique sua conexão e tente novamente.');
    const backup={
-    product:'MOBRIX',formatVersion:2,generatedAt:new Date().toISOString(),
+    product:'MADEVIX',formatVersion:2,generatedAt:new Date().toISOString(),
     company:state.company,exportedBy:{name:state.user?.name,email:state.user?.email},
     resourcesIncluded:Object.keys(data),partial:errors.length>0,errors,data
    };
