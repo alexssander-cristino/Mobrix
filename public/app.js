@@ -132,14 +132,14 @@ async function renderDashboard(){
 
  <section class="command-center-grid">
   <article class="panel command-priorities">
-   <div class="panel-head"><div><p class="eyebrow">MOBRIX COMMAND CENTER</p><h3>Prioridades da operação</h3><p>Itens que merecem atenção agora, organizados por impacto</p></div><span class="command-count">\${priorityItems.length} \${priorityItems.length===1?'item':'itens'}</span></div>
-   <div class="command-priority-list">\${priorityItems.length?priorityItems.map(item=>'<div class="command-priority"><span class="command-priority-dot '+item.level+'"></span><div class="command-priority-copy"><strong>'+esc(item.label)+'</strong><small>'+esc(item.detail)+'</small></div><button type="button" class="text-link" data-page="'+item.page+'">'+esc(item.action)+' →</button></div>').join(''):'<div class="command-empty"><strong>Operação em dia</strong><span>Nenhum alerta prioritário foi identificado com os dados disponíveis.</span></div>'}</div>
+   <div class="panel-head"><div><p class="eyebrow">MOBRIX COMMAND CENTER</p><h3>Prioridades da operação</h3><p>Itens que merecem atenção agora, organizados por impacto</p></div><span class="command-count">${priorityItems.length} ${priorityItems.length===1?'item':'itens'}</span></div>
+   <div class="command-priority-list">${priorityItems.length?priorityItems.map(item=>'<div class="command-priority"><span class="command-priority-dot '+item.level+'"></span><div class="command-priority-copy"><strong>'+esc(item.label)+'</strong><small>'+esc(item.detail)+'</small></div><button type="button" class="text-link" data-page="'+item.page+'">'+esc(item.action)+' →</button></div>').join(''):'<div class="command-empty"><strong>Operação em dia</strong><span>Nenhum alerta prioritário foi identificado com os dados disponíveis.</span></div>'}</div>
   </article>
   <article class="panel command-productivity">
    <div class="panel-head"><div><p class="eyebrow">PRODUTIVIDADE</p><h3>Horas apontadas</h3><p>Apontamentos registrados neste mês</p></div><button type="button" class="text-link" data-page="productivity">Ver equipe →</button></div>
-   <div class="command-hours"><strong>\${(trackedMinutes/60).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}h</strong><span>de trabalho registrado</span></div>
-   <div class="command-productivity-meta"><div><span>Apontamentos</span><strong>\${monthEntries.length}</strong></div><div><span>Equipe ativa</span><strong>\${Object.keys(employeeHours).length}</strong></div></div>
-   <div class="command-top-worker">\${topEmployee?'<span class="command-worker-avatar">'+esc(topEmployee[0].slice(0,1).toUpperCase())+'</span><div><small>Maior volume apontado</small><strong>'+esc(topEmployee[0])+'</strong></div><b>'+(topEmployee[1]/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h</b>':'<div class="command-empty compact"><span>Os apontamentos da equipe aparecerão aqui.</span></div>'}</div>
+   <div class="command-hours"><strong>${(trackedMinutes/60).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}h</strong><span>de trabalho registrado</span></div>
+   <div class="command-productivity-meta"><div><span>Apontamentos</span><strong>${monthEntries.length}</strong></div><div><span>Equipe ativa</span><strong>${Object.keys(employeeHours).length}</strong></div></div>
+   <div class="command-top-worker">${topEmployee?'<span class="command-worker-avatar">'+esc(topEmployee[0].slice(0,1).toUpperCase())+'</span><div><small>Maior volume apontado</small><strong>'+esc(topEmployee[0])+'</strong></div><b>'+(topEmployee[1]/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h</b>':'<div class="command-empty compact"><span>Os apontamentos da equipe aparecerão aqui.</span></div>'}</div>
   </article>
  </section>
  <section class="command-shortcuts">
