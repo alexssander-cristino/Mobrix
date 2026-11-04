@@ -36,10 +36,62 @@ async function api(url, options={}) {
 function toast(message,error=false){const node=document.createElement('div');node.className='toast'+(error?' error':'');node.textContent=message;$('#toast-root').append(node);setTimeout(()=>node.remove(),3400)}
 function showAuth(register=false){$('#auth-screen').classList.remove('hidden');$('#app').classList.add('hidden');$('#login-form').classList.toggle('hidden',register);$('#register-form').classList.toggle('hidden',!register);$('#auth-title').innerHTML=register?'Comece a organizar<br><span>sua produção.</span>':'Sua marcenaria,<br><span>sob controle.</span>';$('#auth-description').textContent=register?'Crie o ambiente da sua empresa no MOBRIX.':'Entre para acompanhar sua operação.';$('#auth-switch').innerHTML=register?'Já possui acesso? <button type="button" id="show-login">Fazer login</button>':'Ainda não tem acesso? <button type="button" id="show-register">Criar empresa</button>';$('#auth-error').textContent=''}
 function showApp(){ $('#auth-screen').classList.add('hidden');$('#app').classList.remove('hidden');$('#user-name').textContent=state.user?.name||'Usuário';$('#user-role').textContent=state.user?.role==='admin'?'Administrador':'Equipe';$('#user-avatar').textContent=(state.user?.name||'M').slice(0,1).toUpperCase();$('#profile-shortcut').textContent=(state.user?.name||'M').slice(0,1).toUpperCase();$('#company-name').textContent=state.company?.name||'Minha empresa';$('#today').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});$('#sidebar').classList.toggle('collapsed',state.sidebarCollapsed);$('#sidebar-collapse').setAttribute('aria-label',state.sidebarCollapsed?'Expandir sidebar':'Recolher sidebar');$('#sidebar-collapse').title=state.sidebarCollapsed?'Expandir menu':'Recolher menu';renderNavIcons();}
-function logout(notify=true){state.token=null;state.user=null;state.company=null;localStorage.removeItem('mobrix_token');showAuth();if(notify)toast('Você saiu da sua conta.')}
-async function initialize(){if(!state.token){showAuth();return}try{const data=await api('/me');state.user=data.user;state.company=data.company;showApp();saveSettingsPrefs(readSettingsPrefs());await navigate(readSettingsPrefs().startPage||'dashboard')}catch{logout(false)}}
+const INACTIVITY_LIMIT=30*60*1000;
+const INACTIVITY_ACTIVITY_KEY='mobrix_last_activity_v1';
+let inactivityCheckTimer=null,lastActivityWrite=0;
+function getLastActivity(){
+ const value=Number(localStorage.getItem(INACTIVITY_ACTIVITY_KEY)||0);
+ return Number.isFinite(value)?value:0;
+}
+function markUserActivity(force=false){
+ if(!state.token)return;
+ const now=Date.now();
+ if(!force&&now-lastActivityWrite<15000)return;
+ lastActivityWrite=now;
+ try{localStorage.setItem(INACTIVITY_ACTIVITY_KEY,String(now))}catch{}
+}
+function checkInactivity(){
+ if(!state.token)return;
+ const last=getLastActivity();
+ if(last&&Date.now()-last>=INACTIVITY_LIMIT){
+  if(inactivityCheckTimer){clearInterval(inactivityCheckTimer);inactivityCheckTimer=null}
+  logout(false);
+  toast('Sua sessão foi encerrada após 30 minutos de inatividade.');
+ }
+}
+function startInactivityMonitor(){
+ if(!state.token)return;
+ if(!getLastActivity())markUserActivity(true);
+ if(inactivityCheckTimer)clearInterval(inactivityCheckTimer);
+ inactivityCheckTimer=setInterval(checkInactivity,10000);
+}
+['pointerdown','keydown','touchstart','wheel','scroll','click'].forEach(eventName=>{
+ document.addEventListener(eventName,()=>markUserActivity(),{passive:true,capture:true});
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkInactivity()});
+window.addEventListener('storage',event=>{
+ if(event.key===INACTIVITY_ACTIVITY_KEY){checkInactivity()}
+ if(event.key==='mobrix_token'&&!event.newValue&&state.token)logout(false);
+});
+function logout(notify=true){
+ if(inactivityCheckTimer){clearInterval(inactivityCheckTimer);inactivityCheckTimer=null}
+ state.token=null;state.user=null;state.company=null;
+ localStorage.removeItem('mobrix_token');localStorage.removeItem(INACTIVITY_ACTIVITY_KEY);
+ showAuth();
+ if(notify)toast('Você saiu da sua conta.')
+}
+async function initialize(){
+ if(!state.token){showAuth();return}
+ const last=getLastActivity();
+ if(last&&Date.now()-last>=INACTIVITY_LIMIT){logout(false);toast('Sua sessão expirou após 30 minutos de inatividade.');return}
+ try{
+  const data=await api('/me');state.user=data.user;state.company=data.company;
+  markUserActivity(true);startInactivityMonitor();showApp();
+  saveSettingsPrefs(readSettingsPrefs());await navigate(readSettingsPrefs().startPage||'dashboard')
+ }catch{logout(false)}
+}
 $('#auth-switch').addEventListener('click',e=>{if(e.target.id==='show-register')showAuth(true);if(e.target.id==='show-login')showAuth(false)});
-$('#login-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);$('#auth-error').textContent='';try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify(Object.fromEntries(f))});state.token=d.token;state.user=d.user;localStorage.setItem('mobrix_token',d.token);await initialize()}catch(err){$('#auth-error').textContent=err.message}});
+$('#login-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);$('#auth-error').textContent='';try{const d=await api('/auth/login',{method:'POST',body:JSON.stringify(Object.fromEntries(f))});state.token=d.token;state.user=d.user;localStorage.setItem('mobrix_token',d.token);localStorage.setItem(INACTIVITY_ACTIVITY_KEY,String(Date.now()));await initialize()}catch(err){$('#auth-error').textContent=err.message}});
 $('#register-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);if(f.get('terms_accepted')!=='on'||f.get('privacy_acknowledged')!=='on'){ $('#auth-error').textContent='Aceite os Termos de Uso e confirme a leitura do Aviso de Privacidade.';return }$('#auth-error').textContent='';try{const d=await api('/auth/register',{method:'POST',body:JSON.stringify(Object.fromEntries(f))});state.token=d.token;state.user=d.user;localStorage.setItem('mobrix_token',d.token);await initialize()}catch(err){$('#auth-error').textContent=err.message}});
 $('#logout').addEventListener('click',()=>logout());
 $('#profile-shortcut').addEventListener('click',()=>navigate('settings'));
