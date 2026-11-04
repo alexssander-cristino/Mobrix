@@ -144,13 +144,32 @@ const iconPaths={
  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>'
 };
 function renderNavIcons(){
- const icons={"building":"building-2","grid":"grid-2x2","home":"house","briefcase":"briefcase-business","dashboard":"layout-dashboard","users":"users","folder":"folder","ruler":"ruler","box":"box","package":"package","file":"file-text","layers":"layers","factory":"factory","chart":"chart-no-axes-column","zap":"zap","check":"shield-check","clock":"clock","wallet":"wallet","settings":"settings"};
+ const icons={
+  building:{tag:'Building2',paths:iconPaths.building},grid:{tag:'Grid2x2',paths:iconPaths.grid},
+  home:{tag:'House',paths:iconPaths.home},briefcase:{tag:'BriefcaseBusiness',paths:iconPaths.briefcase},
+  dashboard:{tag:'LayoutDashboard',paths:iconPaths.dashboard},users:{tag:'Users',paths:iconPaths.users},
+  folder:{tag:'Folder',paths:iconPaths.folder},ruler:{tag:'Ruler',paths:iconPaths.ruler},
+  box:{tag:'Box',paths:iconPaths.box},package:{tag:'Package',paths:iconPaths.package},
+  file:{tag:'FileText',paths:iconPaths.file},layers:{tag:'Layers',paths:iconPaths.layers},
+  factory:{tag:'Factory',paths:iconPaths.factory},chart:{tag:'ChartNoAxesColumn',paths:iconPaths.chart},
+  zap:{tag:'Zap',paths:'<path d="m13 2-3 8h7l-6 12 2-9H6z"/>'},
+  check:{tag:'ShieldCheck',paths:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>'},
+  clock:{tag:'Clock',paths:iconPaths.clock},wallet:{tag:'Wallet',paths:iconPaths.wallet},
+  settings:{tag:'Settings',paths:iconPaths.settings}
+ };
  document.querySelectorAll('[data-nav-icon]').forEach(node=>{
-  const name=icons[node.dataset.navIcon];
-  if(!name)return;
-  const tag='animated-lucide-'+name;
-  if(node.firstElementChild?.localName===tag)return;
-  node.replaceChildren(document.createElement(tag));
+  const item=icons[node.dataset.navIcon];if(!item)return;
+  const fallback='<svg class="nav-fallback-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+item.paths+'</svg>';
+  node.innerHTML=fallback;
+  const customTag='animated-lucide-'+item.tag.replace(/[A-Z]/g,(m,i)=>(i?'-':'')+m.toLowerCase());
+  if(customElements.get(customTag)){
+   const icon=document.createElement(customTag);icon.setAttribute('size','18');icon.setAttribute('aria-hidden','true');icon.classList.add('animated-nav-icon');node.replaceChildren(icon);
+  }else{
+   customElements.whenDefined(customTag).then(()=>{
+    if(!node.isConnected||node.dataset.navIcon!==Object.keys(icons).find(key=>icons[key]===item))return;
+    const icon=document.createElement(customTag);icon.setAttribute('size','18');icon.setAttribute('aria-hidden','true');icon.classList.add('animated-nav-icon');node.replaceChildren(icon);
+   }).catch(()=>{});
+  }
  });
 }
 function handleGlobalSearch(e){
