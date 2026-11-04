@@ -2600,3 +2600,6 @@ input::placeholder,textarea::placeholder{color:#81838d}
 .command-shortcut-actions button span{color:#ef7777;font-size:13px}
 @media(max-width:980px){.command-center-grid{grid-template-columns:1fr}.command-shortcuts{align-items:flex-start;flex-direction:column}.command-shortcut-actions{justify-content:flex-start}}
 @media(max-width:760px){.command-priority{grid-template-columns:8px minmax(0,1fr);gap:9px}.command-priority .text-link{grid-column:2;justify-self:start;padding:0}.command-shortcuts{padding:14px}.command-shortcut-actions{display:grid;width:100%;grid-template-columns:1fr 1fr}.command-shortcut-actions button{justify-content:flex-start}}
+
+/* Marca Madevix na sidebar */
+.sidebar-brand .brand-image{width:42px;height:42px;min-width:42px;overflow:hidden;border-radius:9px;background:#17130f;display:block;flex:none}.sidebar-brand .brand-image img{display:block;width:100%;height:100%;object-fit:cover}.sidebar.collapsed .sidebar-brand .brand-image{width:36px;height:36px;min-width:36px}
