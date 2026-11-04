@@ -45,6 +45,8 @@ function getLastActivity(){
 }
 function markUserActivity(force=false){
  if(!state.token)return;
+ checkInactivity();
+ if(!state.token)return;
  const now=Date.now();
  if(!force&&now-lastActivityWrite<15000)return;
  lastActivityWrite=now;
