@@ -249,3 +249,61 @@ body.cookie-modal-open{overflow:hidden!important}
  #cookie-notice .cookie-panel-bottom{align-items:flex-start!important;flex-direction:column!important;padding:12px 18px!important}
 }
 @media(prefers-reduced-motion:reduce){#cookie-notice.cookie-notice{animation:none!important}#cookie-notice .cookie-action,#cookie-notice .cookie-switch:before{transition:none!important}}
+
+
+/* MOBRIX — aviso de cookies flutuante, discreto e não intrusivo */
+#cookie-backdrop.cookie-backdrop{
+  position:fixed!important;inset:auto 24px 24px auto!important;z-index:99999!important;
+  display:block!important;width:min(420px,calc(100vw - 32px))!important;height:auto!important;
+  padding:0!important;background:transparent!important;backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;pointer-events:none!important;
+}
+#cookie-backdrop.cookie-backdrop[hidden]{display:none!important}
+#cookie-notice.cookie-notice{
+  pointer-events:auto!important;position:relative!important;inset:auto!important;
+  display:block!important;width:100%!important;max-width:none!important;max-height:min(82vh,680px)!important;
+  margin:0!important;padding:22px!important;overflow:auto!important;
+  color:#ececf0!important;background:#191a1f!important;
+  border:1px solid rgba(255,255,255,.10)!important;border-radius:16px!important;
+  box-shadow:0 18px 60px rgba(0,0,0,.42),0 2px 10px rgba(0,0,0,.2)!important;
+  animation:mobrix-cookie-float .24s ease-out both!important;
+}
+@keyframes mobrix-cookie-float{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#cookie-notice .cookie-heading{display:flex!important;align-items:center!important;gap:9px!important;margin:0 0 15px!important}
+#cookie-notice .cookie-icon{display:grid!important;place-items:center!important;width:29px!important;height:29px!important;flex:none!important;border-radius:9px!important;background:rgba(203,61,72,.13)!important;color:#e4777e!important}
+#cookie-notice .cookie-icon svg{width:17px!important;height:17px!important}
+#cookie-notice .cookie-label{color:#c5c5cc!important;font:700 9px/1 Inter,sans-serif!important;letter-spacing:1.25px!important}
+#cookie-notice #cookie-notice-title{margin:0 0 9px!important;color:#f4f4f6!important;font:700 20px/1.25 Inter,system-ui,sans-serif!important;letter-spacing:-.55px!important}
+#cookie-notice .cookie-intro{margin:0 0 17px!important;color:#a6a7b0!important;font:400 12px/1.65 Inter,system-ui,sans-serif!important}
+#cookie-notice .cookie-options{display:grid!important;margin:0 0 14px!important;padding:0 12px!important;background:#202127!important;border:1px solid #353640!important;border-radius:10px!important}
+#cookie-notice .cookie-options[hidden]{display:none!important}
+#cookie-notice .cookie-option{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;min-height:51px!important;margin:0!important;padding:9px 0!important;border-bottom:1px solid #34353e!important;cursor:pointer!important}
+#cookie-notice .cookie-option:last-child{border-bottom:0!important}
+#cookie-notice .cookie-option>div{display:grid!important;gap:4px!important}
+#cookie-notice .cookie-option strong{color:#ededf0!important;font:650 11px Inter,sans-serif!important}
+#cookie-notice .cookie-option small{color:#999ba5!important;font:400 10px/1.4 Inter,sans-serif!important}
+#cookie-notice .cookie-lock{color:#df858b!important;font:700 8px Inter,sans-serif!important;letter-spacing:.7px!important}
+#cookie-notice .cookie-switch{appearance:none!important;position:relative!important;flex:none!important;width:32px!important;height:18px!important;margin:0!important;border:1px solid #555761!important;border-radius:20px!important;background:#373941!important;cursor:pointer!important}
+#cookie-notice .cookie-switch:before{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#d0d0d5;transition:transform .18s}
+#cookie-notice .cookie-switch:checked{background:#b83b45!important;border-color:#d6535d!important}
+#cookie-notice .cookie-switch:checked:before{transform:translateX(14px);background:#fff}
+#cookie-notice .cookie-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
+#cookie-notice .cookie-action{display:flex!important;align-items:center!important;justify-content:center!important;min-height:39px!important;padding:9px 11px!important;border:1px solid transparent!important;border-radius:8px!important;font:650 10px Inter,sans-serif!important;cursor:pointer!important;transition:background .16s,border-color .16s!important}
+#cookie-notice .cookie-action-primary{grid-column:1/-1!important;grid-row:1!important;background:#bd3d48!important;border-color:#c94c56!important;color:#fff!important;box-shadow:none!important}
+#cookie-notice .cookie-action-primary:hover{background:#ce4a55!important}
+#cookie-notice .cookie-action-outline{background:#25262d!important;border-color:#41434c!important;color:#e1e1e5!important}
+#cookie-notice .cookie-action-outline:hover{background:#303139!important}
+#cookie-notice .cookie-action-text{grid-column:1/-1!important;min-height:29px!important;padding:4px!important;background:transparent!important;color:#b5b6bf!important}
+#cookie-notice .cookie-action-text:hover{color:#fff!important;background:#24252b!important}
+#cookie-notice .cookie-action[hidden]{display:none!important}
+#cookie-notice .cookie-policy-link{display:block!important;margin-top:14px!important;padding-top:12px!important;border-top:1px solid #303139!important;color:#9698a2!important;font:500 10px Inter,sans-serif!important;text-decoration:none!important}
+#cookie-notice .cookie-policy-link span{color:#dc7b82!important;margin-left:3px!important}
+#cookie-notice .cookie-policy-link:hover{color:#eee!important}
+#cookie-notice button:focus-visible,#cookie-notice input:focus-visible,#cookie-notice a:focus-visible{outline:2px solid #e77b83!important;outline-offset:3px!important}
+@media(max-width:560px){
+ #cookie-backdrop.cookie-backdrop{inset:auto 12px 12px 12px!important;width:auto!important}
+ #cookie-notice.cookie-notice{padding:19px!important;border-radius:14px!important;max-height:78vh!important;max-height:78dvh!important}
+ #cookie-notice #cookie-notice-title{font-size:19px!important}
+ #cookie-notice .cookie-intro{font-size:11px!important}
+}
+@media(prefers-reduced-motion:reduce){#cookie-notice.cookie-notice{animation:none!important}#cookie-notice .cookie-switch:before{transition:none!important}}
