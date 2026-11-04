@@ -73,6 +73,41 @@ async function auth(req, res, next) {
   }
 }
 
+
+const privacyRequestAttempts = new Map();
+app.post('/api/privacy-requests', asyncRoute(async (req, res) => {
+  const b = req.body || {};
+  // Campo-armadilha para reduzir envios automatizados; não é exibido ao usuário.
+  if (String(b.website || '').trim()) return res.status(202).json({ ok: true });
+  const ip = String(req.ip || req.socket?.remoteAddress || 'unknown').slice(0, 64);
+  const now = Date.now();
+  const recent = (privacyRequestAttempts.get(ip) || []).filter(time => now - time < 60 * 60 * 1000);
+  if (recent.length >= 5) return res.status(429).json({ error: 'Muitas solicitações deste endereço. Tente novamente mais tarde.' });
+  recent.push(now);
+  privacyRequestAttempts.set(ip, recent);
+  if (privacyRequestAttempts.size > 5000) {
+    for (const [key, times] of privacyRequestAttempts) {
+      const valid = times.filter(time => now - time < 60 * 60 * 1000);
+      if (valid.length) privacyRequestAttempts.set(key, valid); else privacyRequestAttempts.delete(key);
+    }
+  }
+  const name = String(b.name || '').trim().slice(0, 160);
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 180);
+  const company = String(b.company || '').trim().slice(0, 160) || null;
+  const requestType = String(b.request_type || '').trim();
+  const description = String(b.description || '').trim().slice(0, 3000);
+  const allowed = ['confirmacao','acesso','correcao','eliminacao','compartilhamento','revogacao','outro'];
+  if (!name || !/^\S+@\S+\.\S+$/.test(email) || !allowed.includes(requestType) || description.length < 10) {
+    return res.status(400).json({ error: 'Preencha nome, e-mail, tipo de solicitação e uma descrição com pelo menos 10 caracteres.' });
+  }
+  const result = await pool.query(
+    `INSERT INTO privacy_requests(name,email,company_name,request_type,description,ip_address,user_agent)
+     VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id,created_at`,
+    [name,email,company,requestType,description,ip, String(req.get('user-agent') || '').slice(0,500) || null]
+  );
+  res.status(201).json({ ok: true, protocol: String(result.rows[0].id), receivedAt: result.rows[0].created_at });
+}));
+
 app.get('/api/health', asyncRoute(async (_req, res) => {
   await pool.query('SELECT 1');
   const requiredTables = ['companies','users','customers','materials','projects','production_orders','stock_movements','finance_transactions','project_parts','offcuts','time_entries','production_stage_logs','purchase_orders','purchase_order_items','material_reservations','quality_checks','project_portal_tokens','project_measurements','project_cost_items','production_trace_labels','production_trace_events','project_approvals','cnc_exports','production_capacity','studio_machines','studio_machine_logs','studio_schedule','studio_nesting_runs','studio_supplier_quotes','studio_configurations','studio_inspections','studio_passports','studio_autopilot_actions','studio_reverse_engineering','studio_cnc_exports','studio_vision_reviews','studio_showroom_configs','studio_factory_simulations','studio_inventory_scans','studio_assembly_guides','studio_predictive_snapshots','studio_iot_devices','studio_machine_telemetry','studio_collaboration_comments','studio_product_history'];
