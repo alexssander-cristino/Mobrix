@@ -2383,3 +2383,31 @@ input::placeholder,textarea::placeholder{color:#81838d}
  .dashboard-intro{background:linear-gradient(120deg,#28292f,#211f25)}
  .dashboard-grid .panel{background:#202126}
 }
+
+/* Lucide Animated — navegação Mobrix */
+.sidebar [data-nav-icon]{display:inline-flex;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:20px;color:currentColor;overflow:visible}
+.sidebar [data-nav-icon] animated-lucide-building-2,
+.sidebar [data-nav-icon] animated-lucide-grid-2x2,
+.sidebar [data-nav-icon] animated-lucide-house,
+.sidebar [data-nav-icon] animated-lucide-briefcase-business,
+.sidebar [data-nav-icon] animated-lucide-layout-dashboard,
+.sidebar [data-nav-icon] animated-lucide-users,
+.sidebar [data-nav-icon] animated-lucide-folder,
+.sidebar [data-nav-icon] animated-lucide-ruler,
+.sidebar [data-nav-icon] animated-lucide-box,
+.sidebar [data-nav-icon] animated-lucide-package,
+.sidebar [data-nav-icon] animated-lucide-file-text,
+.sidebar [data-nav-icon] animated-lucide-layers,
+.sidebar [data-nav-icon] animated-lucide-factory,
+.sidebar [data-nav-icon] animated-lucide-chart-no-axes-column,
+.sidebar [data-nav-icon] animated-lucide-zap,
+.sidebar [data-nav-icon] animated-lucide-shield-check,
+.sidebar [data-nav-icon] animated-lucide-clock,
+.sidebar [data-nav-icon] animated-lucide-brain-circuit,
+.sidebar [data-nav-icon] animated-lucide-contact,
+.sidebar [data-nav-icon] animated-lucide-wallet,
+.sidebar [data-nav-icon] animated-lucide-settings{display:block;width:18px;height:18px;--primary-color:currentColor;--secondary-color:#ef6464}
+.sidebar .nav-item{gap:11px}
+.sidebar .nav-item:hover [data-nav-icon],.sidebar .nav-item.active [data-nav-icon],.sidebar .sidebar-settings-link:hover [data-nav-icon]{color:#f06464}
+.sidebar .nav-label [data-nav-icon],.sidebar .nav-caption [data-nav-icon]{color:#9aa2b2}
+.sidebar-collapse animated-lucide-chevron-left,.sidebar .icon-button animated-lucide-log-out{display:block;width:17px;height:17px}
