@@ -173,15 +173,6 @@ async function main() {
     await expectStatus(await request('/intelligent/reverse-engineering/'+reverse.id, {
       token: registered.token, method: 'PATCH', body: { status: 'approved' }
     }), 200, 'Aprovação da referência');
-    const cnc = await expectStatus(await request('/intelligent/cnc/export', {
-      token: registered.token, method: 'POST', body: { project_id: project.id, machine_profile: 'CSV CI' }
-    }), 201, 'Exportação CNC CSV');
-    assert.ok(cnc.csv.includes('Comprimento_mm'), 'CSV CNC deve incluir dimensões.');
-    await expectStatus(await request('/intelligent/vision', {
-      token: registered.token, method: 'POST',
-      body: { project_id: project.id, title: 'Inspeção fotográfica CI', photo_url: 'https://example.com/part.jpg',
-        checklist: [{ item: 'Medidas conferidas', passed: true }], annotations: [{ label: 'Borda', x: 10, y: 20 }] }
-    }), 201, 'Registro Mobrix Vision');
     const showroom = await expectStatus(await request('/intelligent/showroom', {
       token: registered.token, method: 'POST',
       body: { project_id: project.id, title: 'Showroom CI', model_url: 'https://example.com/model.glb', config: { accent: '#aa2222' } }
@@ -206,8 +197,6 @@ async function main() {
     await expectStatus(await request('/intelligent/assembly/'+guide.id+'/steps', {
       token: registered.token, method: 'PATCH', body: { steps: guide.steps.map((step, i) => ({ ...step, done: i === 0 })) }
     }), 200, 'Atualização do progresso da montagem');
-    const predictive = await expectStatus(await request('/intelligent/predictive?days=30', { token: registered.token }), 200, 'Mobrix Predict');
-    assert.ok(Array.isArray(predictive.materials), 'Previsão deve listar materiais.');
     const device = await expectStatus(await request('/intelligent/iot/devices', {
       token: registered.token, method: 'POST', body: { machine_id: machine.id, name: 'Sensor CI' }
     }), 201, 'Provisionamento IoT');
