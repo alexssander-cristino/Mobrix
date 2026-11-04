@@ -11,3 +11,21 @@
 .innovation-lane article{background:#fafafa;border-color:#ececef}
 .innovation-panel{border-radius:13px}
 .innovation-checklist{border-color:#e8e9ec;border-radius:9px}
+
+/* Dark industrial module palette */
+.innovation-hero{background:linear-gradient(115deg,#28292f,#242127);border-color:#3d3e46;color:#f0f0f3;box-shadow:0 8px 25px rgba(0,0,0,.18)}
+.innovation-hero .eyebrow{color:#ef858a}
+.innovation-hero p:not(.eyebrow){color:#a7a8b0}
+.innovation-tabs button{background:#292a30;border-color:#41424a;color:#b8b9c1}
+.innovation-tabs button:hover{background:#34353c;color:#fff}
+.innovation-tabs button.active{background:#48282e;border-color:#754047;color:#ff9a9e}
+.innovation-kpis article,.innovation-lane{background:#222329;border-color:#3a3b43;color:#e8e8ec}
+.innovation-kpis small,.innovation-lane>small,.innovation-lane article small{color:#a0a1aa}
+.innovation-kpis strong,.innovation-lane article strong{color:#eeeef1}
+.innovation-lane article{background:#292a30;border-color:#41424a}
+.innovation-lane article b,.innovation-lane header span{color:#f0787d}
+.innovation-checklist{background:#25262c;border-color:#41424a}
+.innovation-checklist label{color:#d4d4da}
+.innovation-panel table select{background:#292a30;border-color:#41424a;color:#e8e8ec}
+.copilot-answer{background:#292a30;border-color:#41424a;color:#e2e2e7}
+.capacity-track{background:#41424a}
