@@ -163,7 +163,7 @@
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
   <div id="modal-root"></div>
   <div id="toast-root" class="toast-root" aria-live="polite"></div>
-<aside id="cookie-notice" class="cookie-notice" role="region" aria-label="Aviso sobre cookies e armazenamento" hidden>
+<aside id="cookie-notice" class="cookie-notice" role="region" aria-label="Aviso sobre cookies e armazenamento">
     <div class="cookie-notice-copy">
       <strong>Privacidade e armazenamento</strong>
       <p>O Mobrix utiliza armazenamento local do navegador para manter sua sessão e preferências. Alguns recursos externos, como fontes, podem receber dados técnicos da conexão. Saiba mais na <a href="/cookies.html" target="_blank" rel="noopener">Política de Cookies</a>.</p>
@@ -177,7 +177,7 @@
       if (!notice || !close) return;
       let dismissed = false;
       try { dismissed = localStorage.getItem('mobrix_cookie_notice_dismissed_v1') === '1'; } catch {}
-      if (!dismissed) notice.hidden = false;
+      notice.hidden = dismissed;
       close.addEventListener('click', () => {
         notice.hidden = true;
         try { localStorage.setItem('mobrix_cookie_notice_dismissed_v1', '1'); } catch {}
