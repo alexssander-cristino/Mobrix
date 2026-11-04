@@ -164,33 +164,28 @@
   <div id="modal-root"></div>
   <div id="toast-root" class="toast-root" aria-live="polite"></div>
 <div id="cookie-backdrop" class="cookie-backdrop" hidden>
-  <section id="cookie-notice" class="cookie-notice" role="dialog" aria-modal="true" aria-labelledby="cookie-notice-title" aria-describedby="cookie-notice-description">
-    <div class="cookie-panel-top">
-      <div class="cookie-brand"><span class="cookie-brand-mark">M</span><span>MOBRIX <i>·</i> PRIVACIDADE</span></div>
-      <span class="cookie-panel-tag"><span></span> CENTRAL DE PREFERÊNCIAS</span>
+  <section id="cookie-notice" class="cookie-notice" role="dialog" aria-modal="false" aria-labelledby="cookie-notice-title" aria-describedby="cookie-notice-description">
+    <div class="cookie-heading">
+      <span class="cookie-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 19 6v5.2c0 4.4-2.7 7.7-7 9.5-4.3-1.8-7-5.1-7-9.5V6l7-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+      <span class="cookie-label">SUA PRIVACIDADE</span>
     </div>
-    <div class="cookie-panel-main">
-      <div class="cookie-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 19 6v5.2c0 4.4-2.7 7.7-7 9.5-4.3-1.8-7-5.1-7-9.5V6l7-3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <p class="cookie-eyebrow">VOCÊ DECIDE</p>
-      <h2 id="cookie-notice-title">Privacidade não é detalhe.<br><span>É uma escolha sua.</span></h2>
-      <p id="cookie-notice-description" class="cookie-intro">Usamos cookies e tecnologias semelhantes para manter o Mobrix seguro e funcional. Você escolhe quais recursos opcionais podem ser utilizados. Os essenciais permanecem ativos para garantir o funcionamento da plataforma.</p>
-      <div class="cookie-options" id="cookie-notice-details" hidden>
-        <div class="cookie-option cookie-option-locked"><div><strong>Essenciais</strong><small>Login, segurança e recursos fundamentais.</small></div><span class="cookie-lock">SEMPRE ATIVOS</span></div>
-        <label class="cookie-option"><div><strong>Preferências</strong><small>Guardar suas configurações e escolhas.</small></div><input id="cookie-preferences" type="checkbox" class="cookie-switch"></label>
-        <label class="cookie-option"><div><strong>Estatísticas</strong><small>Medir o uso para melhorar a experiência.</small></div><input id="cookie-analytics" type="checkbox" class="cookie-switch"></label>
-        <label class="cookie-option"><div><strong>Marketing</strong><small>Habilitar recursos de comunicação, quando utilizados.</small></div><input id="cookie-marketing" type="checkbox" class="cookie-switch"></label>
-      </div>
-      <div class="cookie-actions">
-        <button id="cookie-notice-accept" class="cookie-action cookie-action-primary" type="button">Aceitar todos <span>→</span></button>
-        <button id="cookie-notice-reject" class="cookie-action cookie-action-outline" type="button">Somente essenciais</button>
-        <button id="cookie-notice-customize" class="cookie-action cookie-action-text" type="button">Personalizar escolhas</button>
-        <button id="cookie-notice-save" class="cookie-action cookie-action-primary" type="button" hidden>Salvar preferências <span>→</span></button>
-      </div>
+    <h2 id="cookie-notice-title">Você no controle dos seus dados.</h2>
+    <p id="cookie-notice-description" class="cookie-intro">Usamos cookies essenciais para o Mobrix funcionar. Com sua permissão, também podemos usar cookies opcionais para lembrar preferências e entender como a plataforma é utilizada.</p>
+    <div class="cookie-options" id="cookie-notice-details" hidden>
+      <div class="cookie-option cookie-option-locked"><div><strong>Essenciais</strong><small>Necessários para segurança e funcionamento.</small></div><span class="cookie-lock">ATIVOS</span></div>
+      <label class="cookie-option"><div><strong>Preferências</strong><small>Salvam suas configurações.</small></div><input id="cookie-preferences" type="checkbox" class="cookie-switch"></label>
+      <label class="cookie-option"><div><strong>Estatísticas</strong><small>Ajudam a melhorar a plataforma.</small></div><input id="cookie-analytics" type="checkbox" class="cookie-switch"></label>
+      <label class="cookie-option"><div><strong>Marketing</strong><small>Permitem recursos de comunicação.</small></div><input id="cookie-marketing" type="checkbox" class="cookie-switch"></label>
     </div>
-    <div class="cookie-panel-bottom"><span>Você pode mudar sua decisão a qualquer momento.</span><a href="/cookies.html" target="_blank" rel="noopener">Conhecer a política de cookies <span>↗</span></a></div>
+    <div class="cookie-actions">
+      <button id="cookie-notice-accept" class="cookie-action cookie-action-primary" type="button">Aceitar todos</button>
+      <button id="cookie-notice-reject" class="cookie-action cookie-action-outline" type="button">Só essenciais</button>
+      <button id="cookie-notice-customize" class="cookie-action cookie-action-text" type="button">Configurar cookies</button>
+      <button id="cookie-notice-save" class="cookie-action cookie-action-primary" type="button" hidden>Salvar escolhas</button>
+    </div>
+    <a class="cookie-policy-link" href="/cookies.html" target="_blank" rel="noopener">Política de cookies <span>↗</span></a>
   </section>
-</div>
-<script>
+</div><script>
 (() => {
   const backdrop=document.getElementById('cookie-backdrop');
   const notice=document.getElementById('cookie-notice');
@@ -223,8 +218,7 @@
   accept.addEventListener('click',()=>persist({preferences:true,analytics:true,marketing:true}));
   reject.addEventListener('click',()=>persist({preferences:false,analytics:false,marketing:false}));
   save.addEventListener('click',()=>persist({preferences:fields.preferences.checked,analytics:fields.analytics.checked,marketing:fields.marketing.checked}));
-  if(!backdrop.hidden)document.body.classList.add('cookie-modal-open');
-  new MutationObserver(()=>document.body.classList.toggle('cookie-modal-open',!backdrop.hidden)).observe(backdrop,{attributes:true,attributeFilter:['hidden']});
+  document.body.classList.remove('cookie-modal-open');
 })();
 </script>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
