@@ -430,7 +430,7 @@ async function importClassicProject(file){
 function confirmAction(message){return readSettingsPrefs().confirmActions?window.confirm(message):true}
 function readSettingsPrefs(){const defaults={density:'comfortable',startPage:'dashboard',reducedMotion:false,confirmActions:true};try{return{...defaults,...JSON.parse(localStorage.getItem('mobrix_settings')||'{}')}}catch{return defaults}}
 function saveSettingsPrefs(prefs){localStorage.setItem('mobrix_settings',JSON.stringify(prefs));document.body.classList.toggle('compact-ui',prefs.density==='compact');document.body.classList.toggle('reduce-motion-ui',!!prefs.reducedMotion)}
-function renderSettings(){
+function renderSettings(activeTab='company'){
  const prefs=readSettingsPrefs();
  const company=state.company||{},user=state.user||{};
  $('#page-content').innerHTML=`
@@ -440,12 +440,12 @@ function renderSettings(){
    <div class="settings-identity"><span class="settings-avatar">${esc((company.name||'M').slice(0,1).toUpperCase())}</span><div><strong>${esc(company.name||'Minha empresa')}</strong><small>${esc(user.email||'')}</small><span class="settings-role">${esc(user.role==='admin'?'Administrador':'Equipe')}</span></div></div>
   </header>
   <nav class="settings-tabs" aria-label="Seções de configuração">
-   <button class="settings-tab active" type="button" data-settings-tab="company"><span>01</span> Empresa</button>
-   <button class="settings-tab" type="button" data-settings-tab="account"><span>02</span> Minha conta</button>
-   <button class="settings-tab" type="button" data-settings-tab="preferences"><span>03</span> Preferências</button>
-   <button class="settings-tab" type="button" data-settings-tab="data"><span>04</span> Dados e segurança</button>
+   <button class="settings-tab ${activeTab==='company'?'active':''}" type="button" data-settings-tab="company"><span>01</span> Empresa</button>
+   <button class="settings-tab ${activeTab==='account'?'active':''}" type="button" data-settings-tab="account"><span>02</span> Minha conta</button>
+   <button class="settings-tab ${activeTab==='preferences'?'active':''}" type="button" data-settings-tab="preferences"><span>03</span> Preferências</button>
+   <button class="settings-tab ${activeTab==='data'?'active':''}" type="button" data-settings-tab="data"><span>04</span> Dados e segurança</button>
   </nav>
-  <section class="settings-section active" data-settings-panel="company">
+  <section class="settings-section ${activeTab==='company'?'active':''}" data-settings-panel="company">
    <div class="settings-section-heading"><div><p class="eyebrow">IDENTIDADE E CADASTRO</p><h3>Dados da empresa</h3><p>Essas informações identificam sua operação dentro do sistema.</p></div><span class="settings-section-icon">EMP</span></div>
    <form id="settings-company-form" class="settings-form glass-panel">
     <div class="settings-form-grid">
@@ -458,7 +458,7 @@ function renderSettings(){
    </form>
    ${user.role==='admin'?'':'<p class="settings-note">Somente administradores podem alterar os dados cadastrais da empresa.</p>'}
   </section>
-  <section class="settings-section" data-settings-panel="account">
+  <section class="settings-section ${activeTab==='account'?'active':''}" data-settings-panel="account">
    <div class="settings-section-heading"><div><p class="eyebrow">ACESSO INDIVIDUAL</p><h3>Minha conta</h3><p>Atualize seus dados de acesso e mantenha sua senha protegida.</p></div><span class="settings-section-icon">USR</span></div>
    <form id="settings-profile-form" class="settings-form glass-panel">
     <h4>Informações pessoais</h4><div class="settings-form-grid">
@@ -474,7 +474,7 @@ function renderSettings(){
     </div><div class="settings-form-footer"><span>Use no mínimo 8 caracteres.</span><button class="btn btn-secondary" type="submit">Alterar senha</button></div>
    </form>
   </section>
-  <section class="settings-section" data-settings-panel="preferences">
+  <section class="settings-section ${activeTab==='preferences'?'active':''}" data-settings-panel="preferences">
    <div class="settings-section-heading"><div><p class="eyebrow">EXPERIÊNCIA DE USO</p><h3>Preferências do sistema</h3><p>Personalize o comportamento desta instalação do MOBRIX.</p></div><span class="settings-section-icon">UI</span></div>
    <form id="settings-preferences-form" class="settings-form glass-panel">
     <div class="settings-preference-row"><div><strong>Densidade da interface</strong><small>Escolha o espaço entre campos, tabelas e cartões.</small></div><select name="density"><option value="comfortable" ${prefs.density==='comfortable'?'selected':''}>Confortável</option><option value="compact" ${prefs.density==='compact'?'selected':''}>Compacta</option></select></div>
@@ -484,7 +484,7 @@ function renderSettings(){
     <div class="settings-form-footer"><span>Preferências armazenadas neste navegador.</span><div class="settings-inline-actions"><button class="btn btn-quiet" type="button" id="settings-reset-preferences">Restaurar padrão</button><button class="btn btn-primary" type="submit">Salvar preferências</button></div></div>
    </form>
   </section>
-  <section class="settings-section" data-settings-panel="data">
+  <section class="settings-section ${activeTab==='data'?'active':''}" data-settings-panel="data">
    <div class="settings-section-heading"><div><p class="eyebrow">PROTEÇÃO E PORTABILIDADE</p><h3>Dados e segurança</h3><p>Tenha uma cópia dos registros da empresa e controle o encerramento da sessão.</p></div><span class="settings-section-icon">SEC</span></div>
    <div class="settings-data-grid">
     <article class="settings-data-card glass-panel"><span class="settings-data-kicker">BACKUP</span><h4>Exportar dados da empresa</h4><p>Gere um arquivo JSON com clientes, projetos, produção, materiais, financeiro e registros industriais disponíveis.</p><button class="btn btn-primary" type="button" id="settings-export-backup">Exportar backup</button><small>O arquivo é gerado no seu navegador e não altera os dados armazenados.</small></article>
@@ -496,13 +496,46 @@ function renderSettings(){
  if(user.role!=='admin')$('#settings-company-form')?.querySelectorAll('input,button').forEach(el=>{el.disabled=true});
  const tabs=[...$('#page-content').querySelectorAll('[data-settings-tab]')],panels=[...$('#page-content').querySelectorAll('[data-settings-panel]')];
  tabs.forEach(tab=>tab.addEventListener('click',()=>{tabs.forEach(x=>x.classList.toggle('active',x===tab));panels.forEach(x=>x.classList.toggle('active',x.dataset.settingsPanel===tab.dataset.settingsTab))}));
- $('#settings-company-form')?.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const payload=Object.fromEntries(new FormData(e.currentTarget));state.company=await api('/settings/company',{method:'PATCH',body:JSON.stringify(payload)});$('#company-name').textContent=state.company.name;toast('Dados da empresa atualizados.');renderSettings()}catch(err){toast(err.message,true)}finally{button.disabled=false}});
- $('#settings-profile-form')?.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{state.user=await api('/settings/profile',{method:'PATCH',body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});$('#user-name').textContent=state.user.name;$('#user-avatar').textContent=state.user.name.slice(0,1).toUpperCase();$('#profile-shortcut').textContent=state.user.name.slice(0,1).toUpperCase();toast('Perfil atualizado com sucesso.');renderSettings()}catch(err){toast(err.message,true)}finally{button.disabled=false}});
+ $('#settings-company-form')?.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{const payload=Object.fromEntries(new FormData(e.currentTarget));state.company=await api('/settings/company',{method:'PATCH',body:JSON.stringify(payload)});$('#company-name').textContent=state.company.name;toast('Dados da empresa atualizados.');renderSettings('company')}catch(err){toast(err.message,true)}finally{button.disabled=false}});
+ $('#settings-profile-form')?.addEventListener('submit',async e=>{e.preventDefault();const button=e.submitter;button.disabled=true;try{state.user=await api('/settings/profile',{method:'PATCH',body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});$('#user-name').textContent=state.user.name;$('#user-avatar').textContent=state.user.name.slice(0,1).toUpperCase();$('#profile-shortcut').textContent=state.user.name.slice(0,1).toUpperCase();toast('Perfil atualizado com sucesso.');renderSettings('account')}catch(err){toast(err.message,true)}finally{button.disabled=false}});
  $('#settings-password-form')?.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget));if(data.new_password!==data.confirm_password){toast('A confirmação da senha não confere.',true);return}const button=e.submitter;button.disabled=true;try{await api('/settings/password',{method:'POST',body:JSON.stringify({current_password:data.current_password,new_password:data.new_password})});e.currentTarget.reset();toast('Senha alterada com sucesso.')}catch(err){toast(err.message,true)}finally{button.disabled=false}});
  $('#settings-preferences-form')?.addEventListener('submit',e=>{e.preventDefault();const f=e.currentTarget;const next={density:f.elements.density.value,startPage:f.elements.startPage.value,reducedMotion:f.elements.reducedMotion.checked,confirmActions:f.elements.confirmActions.checked};saveSettingsPrefs(next);toast('Preferências salvas neste navegador.')});
  $('#settings-reset-preferences')?.addEventListener('click',()=>{const defaults={density:'comfortable',startPage:'dashboard',reducedMotion:false,confirmActions:true};saveSettingsPrefs(defaults);renderSettings();toast('Preferências restauradas.')});
- $('#settings-logout')?.addEventListener('click',()=>logout());
- $('#settings-export-backup')?.addEventListener('click',async e=>{const button=e.currentTarget;button.disabled=true;button.textContent='Preparando backup...';const endpoints=['/customers','/projects','/orders','/materials','/finance','/engineering/parts','/offcuts','/time-entries','/stock/movements','/purchase-orders'];try{const values=await Promise.all(endpoints.map(async endpoint=>[endpoint.replace(/^\//,''),await api(endpoint)]));const backup={product:'MOBRIX',formatVersion:1,generatedAt:new Date().toISOString(),company:state.company,exportedBy:{name:state.user?.name,email:state.user?.email},data:Object.fromEntries(values)};const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='madevix-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);toast('Backup exportado com sucesso.')}catch(err){toast('Não foi possível gerar o backup: '+err.message,true)}finally{button.disabled=false;button.textContent='Exportar backup'}});
+ $('#settings-logout')?.addEventListener('click',()=>{if(confirmAction('Deseja encerrar sua sessão neste dispositivo?'))logout()});
+ $('#settings-export-backup')?.addEventListener('click',async e=>{
+  const button=e.currentTarget,originalLabel=button.textContent;
+  button.disabled=true;button.textContent='Preparando backup...';
+  const endpoints=[
+   '/customers','/projects','/orders','/materials','/finance',
+   '/engineering/parts','/offcuts','/time-entries','/stock/movements',
+   '/purchase-orders','/quality/checks','/portal/links',
+   '/production/factory','/production/planning','/intelligence/overview',
+   '/innovation/overview','/innovation/trace','/innovation/approvals',
+   '/innovation/supply-forecast'
+  ];
+  try{
+   const results=await Promise.allSettled(endpoints.map(endpoint=>api(endpoint)));
+   const data={},errors=[];
+   results.forEach((result,index)=>{
+    const key=endpoints[index].replace(/^\//,'');
+    if(result.status==='fulfilled')data[key]=result.value;
+    else errors.push({resource:key,message:result.reason?.message||'Falha ao consultar'});
+   });
+   if(!Object.keys(data).length)throw new Error('Nenhum dado pôde ser consultado. Verifique sua conexão e tente novamente.');
+   const backup={
+    product:'MOBRIX',formatVersion:2,generatedAt:new Date().toISOString(),
+    company:state.company,exportedBy:{name:state.user?.name,email:state.user?.email},
+    resourcesIncluded:Object.keys(data),partial:errors.length>0,errors,data
+   };
+   const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json;charset=utf-8'});
+   const url=URL.createObjectURL(blob),link=document.createElement('a');
+   link.href=url;link.download='mobrix-backup-'+new Date().toISOString().slice(0,10)+'.json';
+   document.body.append(link);link.click();link.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1500);
+   toast(errors.length?'Backup gerado com '+errors.length+' recurso(s) indisponível(is). Confira o relatório no arquivo.':'Backup completo exportado com sucesso.');
+  }catch(err){toast('Não foi possível gerar o backup: '+err.message,true)}
+  finally{button.disabled=false;button.textContent=originalLabel}
+ });
  saveSettingsPrefs(prefs);
 }
 $('#page-content').addEventListener('click',async e=>{const b=e.target.closest('[data-action],[data-page],[data-classic-tab],[data-project-view]');if(!b)return;if(b.dataset.page)navigate(b.dataset.page);if(b.dataset.projectView){const root=$('#resource-results'),rows=state.cache.projects||[];if(b.dataset.projectView==='board'){renderProjectBoard(rows);document.querySelectorAll('[data-project-view]').forEach(x=>x.classList.toggle('active',x===b))}else{navigate('projects')}return}if(b.dataset.searchPage)navigate(b.dataset.searchPage);if(b.dataset.classicTab)classicTab(b.dataset.classicTab);if(b.dataset.action==='new-project')openForm('projects');if(b.dataset.action==='open-project'){state.selectedProjectId=b.dataset.id;navigate('project-detail')}if(b.dataset.action==='new-part')openIndustrialForm('part');if(b.dataset.action==='new-offcut')openIndustrialForm('offcut');if(b.dataset.action==='new-time-entry')openIndustrialForm('time');if(b.dataset.action==='reserve-project-materials'){try{const result=await api('/projects/'+b.dataset.id+'/reserve-materials',{method:'POST',body:JSON.stringify({})});toast('Materiais reservados: '+result.reservations.length+' tipo(s).');}catch(err){toast(err.message,true)}}if(b.dataset.action==='create-purchase-from-plan'){state.purchaseProjectId=b.dataset.id;const plan=await api('/purchasing/plan?project_id='+encodeURIComponent(b.dataset.id));const items=plan.materials.filter(m=>m.purchaseSheets>0&&m.sheetConfigured).map(m=>({material_id:m.material_id,quantity:m.purchaseSheets,unit_cost:m.estimatedPurchase/m.purchaseSheets}));if(!items.length){toast('Não há chapas com quantidade de compra calculada. Verifique as dimensões e a espessura cadastradas.',true)}else if(confirmAction('Gerar pedido com '+items.length+' material(is) e '+items.reduce((n,x)=>n+x.quantity,0)+' chapa(s)?')){try{await api('/purchase-orders',{method:'POST',body:JSON.stringify({project_id:b.dataset.id,items})});toast('Pedido de compra gerado.');navigate('purchases')}catch(err){toast(err.message,true)}}}if(b.dataset.action==='receive-purchase-item'){const remaining=Number(b.dataset.remaining),value=prompt('Quantidade recebida (máximo '+remaining+')',String(remaining));if(value!==null){try{const result=await api('/purchase-orders/'+b.dataset.order+'/receive',{method:'POST',body:JSON.stringify({item_id:b.dataset.item,quantity:Number(value)})});toast(result.fullyReceived?'Compra recebida e estoque atualizado.':'Recebimento parcial registrado.');navigate('purchases')}catch(err){toast(err.message,true)}}}if(b.dataset.action==='approve-project'){if(confirmAction('Aprovar este projeto e criar uma ordem de produção? Isso não registra pagamento nem baixa estoque.')){try{const result=await api('/projects/'+b.dataset.id+'/approve',{method:'POST',body:JSON.stringify({})});toast(result.created?'Projeto aprovado e ordem de produção criada.':'Projeto aprovado; ordem existente vinculada.');state.selectedProjectId=b.dataset.id;navigate('project-detail')}catch(err){toast(err.message,true)}}}if(b.dataset.action==='advance-order'&&b.dataset.stage==='concluido'){if(confirmAction('Concluir a ordem? O estoque só será baixado se os materiais estiverem reservados.')){try{await api('/projects/'+b.dataset.projectId+'/consume-materials',{method:'POST',body:JSON.stringify({})})}catch(err){if(!confirmAction(err.message+' Deseja concluir sem baixa automática?'))return}}}if(b.dataset.action==='advance-order'){try{await api('/orders/'+b.dataset.id+'/stage',{method:'PATCH',body:JSON.stringify({stage:b.dataset.stage})});toast('Etapa da ordem atualizada.');navigate('orders')}catch(err){toast(err.message,true)}}if(b.dataset.action==='delete-part'){if(confirmAction('Excluir esta peça da ficha técnica?')){try{await api('/engineering/parts/'+b.dataset.id,{method:'DELETE'});toast('Peça removida.');navigate('engineering')}catch(err){toast(err.message,true)}}}if(b.dataset.action?.startsWith('new-')&&!['new-project','new-part','new-offcut','new-time-entry'].includes(b.dataset.action))openForm(b.dataset.action.slice(4));if(b.dataset.action==='close-modal')closeModal();if(b.dataset.action==='classic-add-item'){const name=$('#classic-item-name')?.value.trim(),qty=Math.max(1,Number($('#classic-item-qty')?.value)||1),price=Math.max(0,Number($('#classic-item-price')?.value)||0);if(name){state.classic.client=$('#classic-client')?.value||'';state.classic.markup=Number($('#classic-markup')?.value)||0;state.classic.items.push({name,qty,price});saveClassic();renderClassic()}}if(b.dataset.action==='classic-remove-item'){state.classic.items.splice(Number(b.dataset.index),1);saveClassic();renderClassic()}if(b.dataset.action==='classic-save-project'){const s=state.classic,total=s.items.reduce((n,x)=>n+x.qty*x.price,0),sale=total*(1+(Number(s.markup)||0)/100);try{await api('/projects',{method:'POST',body:JSON.stringify({title:(s.client?'Orçamento - '+s.client:'Novo orçamento'),description:s.items.map(x=>x.name+' ('+x.qty+' x '+money(x.price)+')').join('\n'),estimated_cost:total,sale_price:sale,status:'orcamento'})});toast('Orçamento salvo como projeto.');navigate('projects')}catch(err){toast(err.message,true)}}if(b.dataset.action==='classic-print')window.print();if(b.dataset.action==='classic-model-reset'){(importedModelViewer||furnitureViewer)?.reset?.()};if(b.dataset.action==='model-toggle-doors'&&importedModelViewer?.toggleDoors){const opened=importedModelViewer.toggleDoors();const btn=b;btn.textContent=opened?'Fechar portas':'Abrir portas'}if(b.dataset.action==='model-toggle-exploded'&&importedModelViewer?.setExploded){const exploded=importedModelViewer.setExploded();b.textContent=exploded?'Montagem normal':'Vista explodida'}if(b.dataset.action==='model-print-cutlist')window.print();if(b.dataset.action==='project-select-file')$('#project-file-input')?.click();if(b.dataset.action==='classic-add-piece'){const name=$('#cut-piece-name')?.value.trim(),length=Number($('#cut-piece-length')?.value),width=Number($('#cut-piece-width')?.value),qty=Math.max(1,Number($('#cut-piece-qty')?.value)||1);if(name&&length>0&&width>0){state.classic.pieces.push({name,length,width,qty});saveClassic();renderClassic()}}if(b.dataset.action==='classic-remove-piece'){state.classic.pieces.splice(Number(b.dataset.index),1);saveClassic();renderClassic()}});
