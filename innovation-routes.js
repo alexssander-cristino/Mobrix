@@ -89,10 +89,10 @@ module.exports = function registerInnovationRoutes(app,{pool,auth,asyncRoute}){
   const [project,parts]=await Promise.all([pool.query('SELECT id,title FROM projects WHERE id=$1 AND company_id=$2',[id,c]),pool.query('SELECT pp.name,pp.length_mm,pp.width_mm,pp.thickness_mm,pp.quantity,pp.grain_direction,pp.edge_banding,m.name material FROM project_parts pp LEFT JOIN materials m ON m.id=pp.material_id AND m.company_id=pp.company_id WHERE pp.project_id=$1 AND pp.company_id=$2 ORDER BY m.name,pp.name',[id,c])]);
   if(!project.rowCount)return res.status(404).json({error:'Projeto não encontrado.'});
   const rows=parts.rows.map(p=>({project:project.rows[0].title,part:p.name,material:p.material||'',length_mm:p.length_mm,width_mm:p.width_mm,thickness_mm:p.thickness_mm,quantity:p.quantity,grain:p.grain_direction,edge_banding:p.edge_banding||''}));
-  await pool.query('INSERT INTO cnc_exports(company_id,project_id,format,file_name,created_by) VALUES($1,$2,$3,$4,$5)',[c,id,'csv','mobrix-cnc-'+id+'.csv',req.user.id]);
+  await pool.query('INSERT INTO cnc_exports(company_id,project_id,format,file_name,created_by) VALUES($1,$2,$3,$4,$5)',[c,id,'csv','madevix-cnc-'+id+'.csv',req.user.id]);
   const quote=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
   const csv=['Projeto,Peça,Material,Comprimento_mm,Largura_mm,Espessura_mm,Quantidade,Veio,Fita_borda',...rows.map(r=>[r.project,r.part,r.material,r.length_mm,r.width_mm,r.thickness_mm,r.quantity,r.grain,r.edge_banding].map(quote).join(','))].join('\r\n');
-  res.set('Content-Type','text/csv; charset=utf-8');res.set('Content-Disposition','attachment; filename="mobrix-cnc-'+id+'.csv"');res.send('\uFEFF'+csv);
+  res.set('Content-Type','text/csv; charset=utf-8');res.set('Content-Disposition','attachment; filename="madevix-cnc-'+id+'.csv"');res.send('\uFEFF'+csv);
  }));
  app.get('/api/innovation/supply-forecast',auth,asyncRoute(async(req,res)=>{
   const c=company(req);
