@@ -24,6 +24,7 @@ O objetivo é conectar o que é vendido ao que é projetado, comprado, fabricado
 - [API](#api)
 - [Autenticação e segurança](#autenticação-e-segurança)
 - [Portal e páginas públicas](#portal-e-páginas-públicas)
+- [Privacidade e documentos legais](#privacidade-e-documentos-legais)
 - [Deploy](#deploy)
 - [Testes e validação](#testes-e-validação)
 - [Limitações e observações técnicas](#limitações-e-observações-técnicas)
@@ -673,6 +674,23 @@ O projeto disponibiliza páginas específicas para fluxos que não exigem a nave
 | \`/rastreio/:code\` | Consulta pública de etiqueta de rastreabilidade. |
 
 O acesso e as informações exibidas dependem da validade do token/código e das regras implementadas para cada recurso.
+
+---
+
+## Privacidade e documentos legais
+
+O sistema disponibiliza páginas públicas para transparência e atendimento relacionado à LGPD:
+
+- `/privacidade.html`: Aviso de Privacidade e explicação dos papéis de controlador e operador.
+- `/termos.html`: Termos de Uso da plataforma.
+- `/cookies.html`: Política de Cookies e tecnologias locais de sessão/preferências.
+- `/direitos-dados.html`: orientações para exercício dos direitos dos titulares.
+
+Os links são exibidos na tela de autenticação. No cadastro, o usuário precisa aceitar os Termos de Uso e confirmar a leitura do Aviso de Privacidade. A versão dos documentos, data/hora, usuário, empresa, endereço IP e user-agent são registrados em `privacy_acceptances`, criada pela migração `008_privacy_compliance.sql`.
+
+**Pendências obrigatórias antes de produção:** preencher nos documentos a identificação jurídica do responsável pelo Mobrix, CPF/CNPJ, endereço e canal de privacidade/contato; confirmar os fornecedores e regiões efetivamente utilizados na hospedagem, banco e armazenamento; revisar os prazos de retenção e os contratos com operadores; e validar o conteúdo com assessoria jurídica. Os campos marcados como `[PREENCHER]` não podem permanecer na versão publicada.
+
+A empresa cliente é, em regra, controladora dos dados pessoais de seus próprios clientes, colaboradores e fornecedores inseridos no sistema. O Mobrix atua como operador dessas informações conforme as instruções e o contrato aplicável, sem prejuízo de atuar como controlador em operações próprias, como cadastro e segurança da conta.
 
 ---
 
