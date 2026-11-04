@@ -2558,3 +2558,45 @@ input::placeholder,textarea::placeholder{color:#81838d}
  .modal-backdrop>.modal{animation:none!important}
  .modal .modal-close{transition:none!important}
 }
+
+
+/* MOBRIX COMMAND CENTER — prioridades e produtividade integradas ao dashboard */
+.command-center-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.8fr);gap:14px;margin:0 0 14px}
+.command-count{flex:0 0 auto;padding:6px 9px;border:1px solid #393b42;border-radius:7px;background:#25262c;color:#d6d7dc;font-size:9px;font-weight:750}
+.command-priority-list{display:grid}
+.command-priority{display:grid;grid-template-columns:9px minmax(0,1fr) auto;gap:11px;align-items:center;padding:12px 0;border-bottom:1px solid #34353b}
+.command-priority:last-child{border-bottom:0}
+.command-priority-dot{width:7px;height:7px;border-radius:50%;background:#858992;box-shadow:0 0 0 4px #8589921c}
+.command-priority-dot.critical{background:#ef6262;box-shadow:0 0 0 4px #ef62621c}
+.command-priority-dot.warning{background:#e6a34b;box-shadow:0 0 0 4px #e6a34b1c}
+.command-priority-dot.info{background:#8d9cad;box-shadow:0 0 0 4px #8d9cad1c}
+.command-priority-copy{display:grid;gap:4px;min-width:0}
+.command-priority-copy strong{color:#ececf0;font-size:11px;font-weight:700}
+.command-priority-copy small{color:#9b9da5;font-size:9.5px;line-height:1.4}
+.command-priority .text-link{font-size:9px}
+.command-empty{display:grid;gap:6px;padding:20px 4px;color:#a7a9b0;font-size:10px}
+.command-empty strong{color:#e4e5e9;font-size:12px}
+.command-empty.compact{padding:8px 0}
+.command-hours{display:flex;align-items:baseline;gap:9px;padding:9px 0 16px;border-bottom:1px solid #34353b}
+.command-hours strong{color:#f1f1f4;font:800 29px Manrope;letter-spacing:-1px}
+.command-hours span{color:#9b9da5;font-size:10px}
+.command-productivity-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:13px 0}
+.command-productivity-meta div{display:grid;gap:4px}
+.command-productivity-meta span{color:#9b9da5;font-size:9px}
+.command-productivity-meta strong{color:#e7e8ec;font-size:14px}
+.command-top-worker{display:flex;align-items:center;gap:9px;padding-top:12px;border-top:1px solid #34353b}
+.command-worker-avatar{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#3a2528;color:#f18a8a;font-size:12px;font-weight:800}
+.command-top-worker>div{display:grid;gap:3px;min-width:0;flex:1}
+.command-top-worker small{color:#92949d;font-size:8.5px}
+.command-top-worker strong{overflow:hidden;color:#e5e6ea;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+.command-top-worker>b{color:#e6a34b;font-size:10px}
+.command-shortcuts{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 18px;margin:0 0 18px;border:1px solid #34353b;border-radius:11px;background:#202126}
+.command-shortcuts>div:first-child{display:grid;gap:5px}
+.command-shortcuts .eyebrow{margin:0;color:#a5a7af;font-size:8px;letter-spacing:1px}
+.command-shortcuts>div:first-child>strong{color:#e9e9ed;font-size:11px}
+.command-shortcut-actions{display:flex;align-items:center;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.command-shortcut-actions button{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #3a3b42;border-radius:7px;background:#292a30;color:#d8d9de;font:650 9px Inter,sans-serif;transition:border-color .18s,background .18s}
+.command-shortcut-actions button:hover{border-color:#8e3438;background:#33272a}
+.command-shortcut-actions button span{color:#ef7777;font-size:13px}
+@media(max-width:980px){.command-center-grid{grid-template-columns:1fr}.command-shortcuts{align-items:flex-start;flex-direction:column}.command-shortcut-actions{justify-content:flex-start}}
+@media(max-width:760px){.command-priority{grid-template-columns:8px minmax(0,1fr);gap:9px}.command-priority .text-link{grid-column:2;justify-self:start;padding:0}.command-shortcuts{padding:14px}.command-shortcut-actions{display:grid;width:100%;grid-template-columns:1fr 1fr}.command-shortcut-actions button{justify-content:flex-start}}
