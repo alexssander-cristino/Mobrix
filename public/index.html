@@ -163,40 +163,90 @@
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
   <div id="modal-root"></div>
   <div id="toast-root" class="toast-root" aria-live="polite"></div>
-<aside id="cookie-notice" class="cookie-notice" role="region" aria-label="Aviso de privacidade e cookies" hidden>
-    <div class="cookie-notice-top">
+<aside id="cookie-notice" class="cookie-notice" role="dialog" aria-modal="false" aria-labelledby="cookie-notice-title" aria-describedby="cookie-notice-description" hidden>
+    <div class="cookie-notice-heading">
       <span class="cookie-notice-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5 19 6v5.2c0 4.4-2.8 7.6-7 9.3-4.2-1.7-7-4.9-7-9.3V6l7-2.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.2 19.2 6v5.1c0 4.5-2.8 7.8-7.2 9.7-4.4-1.9-7.2-5.2-7.2-9.7V6L12 3.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.2h.01M14.8 9.2h.01M14.2 15.1h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       </span>
-      <span class="cookie-notice-label">PRIVACIDADE MOBRIX</span>
-      <button id="cookie-notice-close" class="cookie-notice-x" type="button" aria-label="Fechar aviso" title="Fechar aviso">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
+      <div class="cookie-notice-brand">
+        <span class="cookie-notice-label">CENTRAL DE PRIVACIDADE</span>
+        <span class="cookie-notice-status"><i></i> Suas escolhas importam</span>
+      </div>
     </div>
     <div class="cookie-notice-copy">
-      <h2>Seus dados merecem cuidado.</h2>
-      <p>Usamos armazenamento local para manter sua sessão e suas preferências. Recursos externos, como fontes, também podem receber dados técnicos da conexão.</p>
+      <h2 id="cookie-notice-title">Você no controle dos seus dados.</h2>
+      <p id="cookie-notice-description">Utilizamos tecnologias essenciais para manter o Mobrix seguro e funcionando. Com sua autorização, também poderemos utilizar recursos opcionais. Escolha como deseja continuar.</p>
     </div>
-    <div class="cookie-notice-actions">
-      <a href="/cookies.html" target="_blank" rel="noopener">Entenda como funciona <span aria-hidden="true">↗</span></a>
-      <button id="cookie-notice-accept" class="cookie-notice-close" type="button">Entendi</button>
+    <div class="cookie-notice-details" id="cookie-notice-details" hidden>
+      <div class="cookie-preference-row">
+        <span><strong>Necessários</strong><small>Login, segurança e funcionamento básico.</small></span>
+        <span class="cookie-required">Sempre ativos</span>
+      </div>
+      <label class="cookie-preference-row" for="cookie-preferences">
+        <span><strong>Preferências</strong><small>Salvar escolhas para facilitar seu uso.</small></span>
+        <input id="cookie-preferences" type="checkbox" class="cookie-toggle">
+      </label>
+      <label class="cookie-preference-row" for="cookie-analytics">
+        <span><strong>Estatísticas</strong><small>Ajudam a entender o desempenho e melhorar o sistema.</small></span>
+        <input id="cookie-analytics" type="checkbox" class="cookie-toggle">
+      </label>
+      <label class="cookie-preference-row" for="cookie-marketing">
+        <span><strong>Marketing</strong><small>Permitem recursos de comunicação e divulgação, se utilizados.</small></span>
+        <input id="cookie-marketing" type="checkbox" class="cookie-toggle">
+      </label>
+    </div>
+    <div class="cookie-notice-footer">
+      <a href="/cookies.html" target="_blank" rel="noopener">Política de cookies <span aria-hidden="true">↗</span></a>
+      <div class="cookie-notice-actions">
+        <button id="cookie-notice-customize" class="cookie-btn cookie-btn-quiet" type="button">Personalizar</button>
+        <button id="cookie-notice-reject" class="cookie-btn cookie-btn-secondary" type="button">Apenas necessários</button>
+        <button id="cookie-notice-accept" class="cookie-btn cookie-btn-primary" type="button">Aceitar todos</button>
+        <button id="cookie-notice-save" class="cookie-btn cookie-btn-primary" type="button" hidden>Salvar escolhas</button>
+      </div>
     </div>
   </aside>
   <script>
     (() => {
       const notice = document.getElementById('cookie-notice');
-      const close = document.getElementById('cookie-notice-accept');
-      const dismiss = document.getElementById('cookie-notice-close');
-      if (!notice || !close || !dismiss) return;
-      let dismissed = false;
-      try { dismissed = localStorage.getItem('mobrix_cookie_notice_dismissed_v1') === '1'; } catch {}
-      notice.hidden = dismissed;
-      const hideNotice = () => {
-        notice.hidden = true;
-        try { localStorage.setItem('mobrix_cookie_notice_dismissed_v1', '1'); } catch {}
+      if (!notice) return;
+      const details = document.getElementById('cookie-notice-details');
+      const customize = document.getElementById('cookie-notice-customize');
+      const accept = document.getElementById('cookie-notice-accept');
+      const reject = document.getElementById('cookie-notice-reject');
+      const save = document.getElementById('cookie-notice-save');
+      const fields = {
+        preferences: document.getElementById('cookie-preferences'),
+        analytics: document.getElementById('cookie-analytics'),
+        marketing: document.getElementById('cookie-marketing')
       };
-      close.addEventListener('click', hideNotice);
-      dismiss.addEventListener('click', hideNotice);
+      const storageKey = 'mobrix_cookie_consent_v2';
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(storageKey) || 'null'); } catch {}
+      notice.hidden = Boolean(saved && saved.version === 2);
+      const setPreferences = (value) => {
+        Object.entries(fields).forEach(([key, field]) => { field.checked = Boolean(value && value[key]); });
+      };
+      const persist = (value) => {
+        const consent = { version: 2, necessary: true, ...value, updatedAt: new Date().toISOString() };
+        try { localStorage.setItem(storageKey, JSON.stringify(consent)); } catch {}
+        notice.hidden = true;
+        window.dispatchEvent(new CustomEvent('mobrix:cookie-consent-updated', { detail: consent }));
+      };
+      setPreferences(saved);
+      customize.addEventListener('click', () => {
+        details.hidden = !details.hidden;
+        customize.textContent = details.hidden ? 'Personalizar' : 'Ocultar opções';
+        accept.hidden = !details.hidden;
+        reject.hidden = !details.hidden;
+        save.hidden = details.hidden;
+      });
+      accept.addEventListener('click', () => persist({ preferences: true, analytics: true, marketing: true }));
+      reject.addEventListener('click', () => persist({ preferences: false, analytics: false, marketing: false }));
+      save.addEventListener('click', () => persist({
+        preferences: fields.preferences.checked,
+        analytics: fields.analytics.checked,
+        marketing: fields.marketing.checked
+      }));
     })();
   </script>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script>
