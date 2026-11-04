@@ -2421,3 +2421,29 @@ input::placeholder,textarea::placeholder{color:#81838d}
 .sidebar .nav-label .nav-icon,.sidebar .nav-caption .nav-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px}
 .sidebar .nav-label .nav-icon svg,.sidebar .nav-caption .nav-icon svg{width:15px;height:15px}
 .sidebar-collapse svg,.sidebar .icon-button svg{display:block;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+
+/* FIX DEFINITIVO — ícones Lucide inline sempre visíveis na sidebar */
+.sidebar [data-nav-icon]{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 20px!important;width:20px!important;min-width:20px!important;height:22px!important;
+ color:inherit!important;overflow:visible!important;line-height:1!important;
+}
+.sidebar [data-nav-icon]>.nav-fallback-icon{
+ display:block!important;visibility:visible!important;opacity:1!important;
+ width:19px!important;height:19px!important;min-width:19px!important;
+ color:currentColor!important;stroke:currentColor!important;fill:none!important;
+ overflow:visible!important;flex:none!important;
+}
+.sidebar .nav-item:hover [data-nav-icon]>.nav-fallback-icon,
+.sidebar .nav-item:focus-visible [data-nav-icon]>.nav-fallback-icon{
+ animation:mobrix-lucide-pop .38s ease-out;
+}
+.sidebar .nav-item.active [data-nav-icon]>.nav-fallback-icon{color:#ff777d!important}
+.sidebar .nav-label [data-nav-icon]>.nav-fallback-icon,
+.sidebar .nav-caption [data-nav-icon]>.nav-fallback-icon{width:16px!important;height:16px!important;min-width:16px!important}
+@keyframes mobrix-lucide-pop{
+ 0%{transform:scale(.82) rotate(-8deg)}
+ 65%{transform:scale(1.12) rotate(3deg)}
+ 100%{transform:scale(1) rotate(0)}
+}
