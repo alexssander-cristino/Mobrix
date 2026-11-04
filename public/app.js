@@ -60,7 +60,7 @@ function renderPageSkeleton(page){
 }
 async function navigate(page){if(page!=='classic'){if(furnitureViewer){furnitureViewer.destroy();furnitureViewer=null}if(importedModelViewer){importedModelViewer.destroy();importedModelViewer=null}}state.page=page;document.querySelectorAll('.nav-item.active').forEach(node=>{node.classList.remove('active');node.removeAttribute('aria-current')});const activeNav=document.querySelector('.nav [data-page="'+page+'"]');if(activeNav){activeNav.classList.add('active');activeNav.setAttribute('aria-current','page')};$('#page-kicker').textContent=pageMeta[page][0];$('#page-title').textContent=pageMeta[page][1];$('#sidebar').classList.remove('open');$('#sidebar-overlay')?.classList.remove('visible');$('#global-search').value='';$('#global-search-results').classList.add('hidden');$('#page-content').classList.remove('page-enter');void $('#page-content').offsetWidth;$('#page-content').classList.add('page-enter');$('#page-content').innerHTML=renderPageSkeleton(page);try{if(page==='dashboard')await renderDashboard();else if(page==='settings')renderSettings();else if(['engineering','offcuts','productivity'].includes(page))await renderIndustrial(page);else if(page==='purchasing')await renderPurchasing();else if(page==='purchases')await renderPurchaseOrders();else if(page==='project-detail')await renderProjectDetail(state.selectedProjectId);else if(page==='classic')renderClassic();else if(page==='innovation')await window.renderInnovationPage(page);else if(page==='studio')await window.renderAdvancedStudio();else if(page==='intelligent')await window.renderIntelligentFactory();else if(['factory','intelligence','quality','portal'].includes(page))await window.renderAdvancedPage(page);else await renderResource(page)}catch(e){$('#page-content').innerHTML='<div class="panel empty-state">'+esc(e.message)+'</div>'}}
 async function renderDashboard(){
- const [d,projects,orders,finance,customers,materials]=await Promise.all([api('/dashboard'),api('/projects'),api('/orders'),api('/finance'),api('/customers'),api('/materials')]);
+ const [d,projects,orders,finance,customers,materials,timeEntries]=await Promise.all([api('/dashboard'),api('/projects'),api('/orders'),api('/finance'),api('/customers'),api('/materials'),api('/time-entries')]);
  const now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1),nextWeek=new Date(now.getFullYear(),now.getMonth(),now.getDate()+7);
  const paid=finance.filter(x=>x.paid_at),monthPaid=paid.filter(x=>new Date(x.paid_at)>=monthStart);
  const income=monthPaid.filter(x=>x.transaction_type==='receita').reduce((n,x)=>n+Number(x.amount||0),0);
@@ -69,6 +69,18 @@ async function renderDashboard(){
  const upcoming=orders.filter(x=>x.due_date&&new Date(x.due_date+'T23:59:59')>=now&&new Date(x.due_date+'T00:00:00')<=nextWeek&&x.stage!=='concluido');
  const overdue=orders.filter(x=>x.due_date&&new Date(x.due_date+'T23:59:59')<now&&x.stage!=='concluido'&&x.stage!=='pausado');
  const lowStock=materials.filter(x=>Number(x.quantity)<=Number(x.minimum_quantity));
+ const monthEntries=timeEntries.filter(x=>x.started_at&&new Date(x.started_at)>=monthStart);
+ const trackedMinutes=monthEntries.reduce((sum,x)=>sum+Number(x.duration_minutes||0),0);
+ const employeeHours=monthEntries.reduce((map,x)=>{const name=String(x.employee_name||'Não identificado');map[name]=(map[name]||0)+Number(x.duration_minutes||0);return map;},{});
+ const topEmployee=Object.entries(employeeHours).sort((a,b)=>b[1]-a[1])[0];
+ const orderProjectIds=new Set(orders.map(x=>String(x.project_id)));
+ const approvedWithoutOrder=projects.filter(x=>['aprovado','producao'].includes(x.status)&&!orderProjectIds.has(String(x.id)));
+ const priorityItems=[
+  ...overdue.slice(0,3).map(x=>({level:'critical',label:'Prazo vencido',detail:'OP #'+x.code+' · '+(x.project_title||'Projeto sem título'),page:'orders',action:'Abrir produção'})),
+  ...(lowStock.length?[{level:'warning',label:'Estoque no limite',detail:lowStock.length+' materiais precisam de reposição ou conferência',page:'materials',action:'Conferir estoque'}]:[]),
+  ...(approvedWithoutOrder.length?[{level:'warning',label:'Projeto sem ordem',detail:approvedWithoutOrder.length+' projetos aprovados ainda não possuem OP',page:'projects',action:'Ver projetos'}]:[]),
+  ...(pendingQuotes?[{level:'info',label:'Orçamentos aguardando',detail:pendingQuotes+' propostas ainda não foram aprovadas',page:'projects',action:'Acompanhar propostas'}]:[])
+ ].slice(0,6);
  const fmtMonth=d=>d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
  const months=Array.from({length:6},(_,i)=>new Date(now.getFullYear(),now.getMonth()-5+i,1));
  const chartRows=months.map(m=>{const next=new Date(m.getFullYear(),m.getMonth()+1,1);const items=paid.filter(x=>new Date(x.paid_at)>=m&&new Date(x.paid_at)<next);return{label:fmtMonth(m),income:items.filter(x=>x.transaction_type==='receita').reduce((n,x)=>n+Number(x.amount||0),0),expense:items.filter(x=>x.transaction_type==='despesa').reduce((n,x)=>n+Number(x.amount||0),0)}});
@@ -116,7 +128,30 @@ async function renderDashboard(){
    <div class="upcoming-list">${nextItems.length?nextItems.map(x=>'<div class="upcoming-item"><span class="upcoming-indicator '+x.tone+'"></span><div><strong>'+esc(x.title)+'</strong><small>'+esc(x.detail)+'</small></div><span class="pill '+x.tone+'">'+x.kind+'</span></div>').join(''):'<div class="empty-state">Nenhum prazo próximo ou vencido identificado.</div>'}
    ${lowStock.length?'<div class="inline-alert"><span class="alert-symbol">!</span><div><strong>'+lowStock.length+' materiais com estoque baixo</strong><small>Confira disponibilidade antes de iniciar novas ordens.</small></div><button class="text-link" data-page="materials">Ver estoque</button></div>':''}</div>
   </section>
- </div>`;
+ </div>
+
+ <section class="command-center-grid">
+  <article class="panel command-priorities">
+   <div class="panel-head"><div><p class="eyebrow">MOBRIX COMMAND CENTER</p><h3>Prioridades da operação</h3><p>Itens que merecem atenção agora, organizados por impacto</p></div><span class="command-count">\${priorityItems.length} \${priorityItems.length===1?'item':'itens'}</span></div>
+   <div class="command-priority-list">\${priorityItems.length?priorityItems.map(item=>'<div class="command-priority"><span class="command-priority-dot '+item.level+'"></span><div class="command-priority-copy"><strong>'+esc(item.label)+'</strong><small>'+esc(item.detail)+'</small></div><button type="button" class="text-link" data-page="'+item.page+'">'+esc(item.action)+' →</button></div>').join(''):'<div class="command-empty"><strong>Operação em dia</strong><span>Nenhum alerta prioritário foi identificado com os dados disponíveis.</span></div>'}</div>
+  </article>
+  <article class="panel command-productivity">
+   <div class="panel-head"><div><p class="eyebrow">PRODUTIVIDADE</p><h3>Horas apontadas</h3><p>Apontamentos registrados neste mês</p></div><button type="button" class="text-link" data-page="productivity">Ver equipe →</button></div>
+   <div class="command-hours"><strong>\${(trackedMinutes/60).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}h</strong><span>de trabalho registrado</span></div>
+   <div class="command-productivity-meta"><div><span>Apontamentos</span><strong>\${monthEntries.length}</strong></div><div><span>Equipe ativa</span><strong>\${Object.keys(employeeHours).length}</strong></div></div>
+   <div class="command-top-worker">\${topEmployee?'<span class="command-worker-avatar">'+esc(topEmployee[0].slice(0,1).toUpperCase())+'</span><div><small>Maior volume apontado</small><strong>'+esc(topEmployee[0])+'</strong></div><b>'+(topEmployee[1]/60).toLocaleString('pt-BR',{maximumFractionDigits:1})+'h</b>':'<div class="command-empty compact"><span>Os apontamentos da equipe aparecerão aqui.</span></div>'}</div>
+  </article>
+ </section>
+ <section class="command-shortcuts">
+  <div><p class="eyebrow">ACESSO RÁPIDO</p><strong>Continue de onde a operação precisa</strong></div>
+  <div class="command-shortcut-actions">
+   <button type="button" data-page="projects"><span>＋</span>Novo projeto</button>
+   <button type="button" data-page="orders"><span>▤</span>Ordens de produção</button>
+   <button type="button" data-page="purchasing"><span>↗</span>Planejar compras</button>
+   <button type="button" data-page="intelligence"><span>◈</span>Análise gerencial</button>
+  </div>
+ </section>
+`;
  renderNavIcons();
 }
 
